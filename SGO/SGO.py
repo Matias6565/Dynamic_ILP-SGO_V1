@@ -121,10 +121,10 @@ class SGO:
         total = self.globalBestPosition
         #print(total)
         for t in range(len(total)):
-            #Node_id = total[t][0:3]
-            #Lambda_id = total[t][3:11]
-            Split_id = total[t][0:4]
-            print("Split_ID {}; and Antenas {}".format(Split_id, t))
+            Node_id = total[t][0:3]
+            Lambda_id = total[t][3:11]
+            Split_id = total[t][11:15]
+            print("Node_ID {}; Lambda_ID {}; Split_ID {}; and Antenas {}".format(Node_id, Lambda_id, Split_id, t))
 
 
         endTime = time.time()
@@ -144,6 +144,7 @@ class SGO:
             position = [list(np.random.choice([0,1], self.numberOfVariables)) for x in range(self.numberOfRrh)]
             
             for x in range(self.numberOfRrh):
+                position[x][11] = 1
                 position[x][0] = 1
             
             evals,*resto = self.__evaluate(position)
@@ -173,6 +174,9 @@ class SGO:
         
         total_traffic_cloud = 0
         total_traffic_fog = 0
+        traffic_fog1 = 0
+        traffic_fog2 = 0
+        traffic_wavelength = [0, 0, 0, 0, 0, 0, 0, 0]
         
         for x in range(self.numberOfRrh):
             eval, total_traffic_cloud, total_traffic_fog, traffic_fog1, traffic_fog2, traffic_wavelength = Restricao().energy(total_traffic_cloud, total_traffic_fog, traffic_fog1, traffic_fog2, traffic_wavelength, position[x])
@@ -192,8 +196,10 @@ class SGO:
                         player.position[x][y] = 1
         
         for x in range(self.numberOfRrh):
-            if player.position[x].count(1) == 0:
+            if player.position[x][11:15].count(1) == 0 or player.position[x][0:3].count(1) == 0:
+                player.position[x][11] = 1
                 player.position[x][0] = 1
+                
     
     def __move_forward(self, player):
         bestPosition = player.bestPosition.copy()
@@ -226,7 +232,8 @@ class SGO:
                         player.position[i][j] = 1
             
             
-            if player.position[i].count(1) == 0:
+            if player.position[i][11:15].count(1) == 0 or player.position[i][0:3].count(1) == 0:
+                player.position[i][11] = 1
                 player.position[i][0] = 1
     
     
