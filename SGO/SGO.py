@@ -9,10 +9,10 @@ from SGO.Player import Player
 import time
 import numpy as np
 from math import e
-from Restriction import Restricao
+from RestrictionAll import Restricao
 
 class SGO:
-    def __init__(self, playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh, numberOfVariables,
+    def __init__(self, playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh, numberOfVariables=[3,8,4],
                  target=None, moveOffProbability=0.1, moveForwardAfterMoveOffProbability=0.05, 
                  substitutionProbability=0.1, inertiaWeight=0.191, cognitiveWeight=0.191, socialWeight=0.618):
         self.playerNumber = playerNumber
@@ -55,7 +55,7 @@ class SGO:
             if(self.target != None and self.globalBestEval <= self.target):
                 break;
             
-            if(functionEval == self.functionEvaluationLimit):
+            if(functionEval >= self.functionEvaluationLimit):
                 break;
             
             potentialBestEval = 10e1000000000000000
@@ -77,36 +77,37 @@ class SGO:
                 functionEval += 1
 
                 for e in range(len(evals)):
-                    if evals[e] < player.bestEvals[e]:
-                        player.bestEvals[e] = evals[e]
-                        player.bestPosition[e] = player.position[e].copy()
+                    for q in range(len(eval[e])):
+                        if evals[e][q] < player.bestEvals[e][q]:
+                            player.bestEvals[e][q] = evals[e][q]
+                            player.bestPosition[e][q] = player.position[e][q].copy()
                 
                 evals,*resto = self.__evaluate(player.bestPosition)
                 functionEval += 1
                 
-                player.bestEvals = evals.copy()
+                player.bestEvals = [e.copy() for e in evals]
 
                 if player.getBestEval() < potentialBestEval:
                     potentialBestEval = player.getBestEval()
-                    potentialBestEvals = player.bestEvals.copy()
-                    potentialBestPosition = [pp.copy() for pp in player.bestPosition]
+                    potentialBestEvals = [e.copy() for e in player.bestEvals]
+                    potentialBestPosition = [[p.copy() for p in pp] for pp in player.bestPosition]
                 
-                if(functionEval == self.functionEvaluationLimit):
+                if(functionEval >= self.functionEvaluationLimit):
                     break;
             
             if potentialBestEval < self.globalBestEval:
                 self.globalBestEval = potentialBestEval
-                self.globalBestEvals = potentialBestEvals.copy()
-                self.globalBestPosition = [pp.copy() for pp in potentialBestPosition]
-            
+                self.globalBestEvals = [e.copy() for e in potentialBestEvals]
+                self.globalBestPosition = [[p.copy() for p in pp] for pp in potentialBestPosition]
+                
             if np.random.rand() <= self.substitutionProbability:
                 playerIndex = np.random.randint(self.playerNumber)
                 substituteIndex = np.random.randint(self.substituteNumber)
                 
                 if substitutePlayers[substituteIndex].getBestEval() < players[playerIndex].getBestEval():
-                    players[playerIndex].bestEvals = substitutePlayers[substituteIndex].bestEvals.copy()
-                    players[playerIndex].position = [pp.copy() for pp in substitutePlayers[substituteIndex].bestPosition]
-                    players[playerIndex].bestPosition = [pp.copy() for pp in substitutePlayers[substituteIndex].bestPosition]
+                    players[playerIndex].bestEvals = [e.copy() for e in substitutePlayers[substituteIndex].bestEvals]
+                    players[playerIndex].position = [[p.copy() for p in pp] for pp in substitutePlayers[substituteIndex].bestPosition]
+                    players[playerIndex].bestPosition = [[p.copy() for p in pp] for pp in substitutePlayers[substituteIndex].bestPosition]
 
             playersSorted = players.copy()
             playersSorted.sort(key=lambda x: x.getBestEval())
@@ -114,16 +115,16 @@ class SGO:
             playerIndex = 0
             for i in range(self.substituteNumber):
                 if playersSorted[playerIndex].getBestEval() < substitutePlayers[i].getBestEval():
-                    substitutePlayers.insert(i, Player([pp.copy() for pp in playersSorted[playerIndex].bestPosition], [pp.copy() for pp in playersSorted[playerIndex].bestPosition], playersSorted[playerIndex].bestEvals.copy(), playersSorted[playerIndex].numberOfRrh, playersSorted[playerIndex].numberOfVariables))
+                    substitutePlayers.insert(i, Player([[p.copy() for p in pp] for pp in playersSorted[playerIndex].bestPosition], [[p.copy() for p in pp] for pp in playersSorted[playerIndex].bestPosition], [e.copy() for e in playersSorted[playerIndex].bestEvals], playersSorted[playerIndex].numberOfRrh, playersSorted[playerIndex].numberOfVariables))
                     substitutePlayers.pop()
                     playerIndex += 1        
 
         total = self.globalBestPosition
         #print(total)
         for t in range(len(total)):
-            Node_id = total[t][0:3]
-            Lambda_id = total[t][3:11]
-            Split_id = total[t][11:15]
+            Node_id = total[t][0]
+            Lambda_id = total[t][1]
+            Split_id = total[t][2]
             print("Node_ID {}; Lambda_ID {}; Split_ID {}; and Antenas {}".format(Node_id, Lambda_id, Split_id, t))
 
 
@@ -132,6 +133,7 @@ class SGO:
         print("Execution Time: %fs" %(endTime-startTime))
         print("Function Evaluations:",functionEval)
         print("------------------------------END------------------------------")
+        return self.globalBestPosition
                     
                     
             
@@ -141,20 +143,23 @@ class SGO:
     
         
         for i in range(self.playerNumber):
-            position = [list(np.random.choice([0,1], self.numberOfVariables)) for x in range(self.numberOfRrh)]
+            position = []
+            for j in range(self.numberOfRrh):
+                position.append([list(np.random.choice([0,1], self.numberOfVariables[x])) for x in range(len(self.numberOfVariables))])
             
             for x in range(self.numberOfRrh):
-                position[x][11] = 1
-                position[x][0] = 1
+                position[x][0][0] = 1
+                position[x][2][0] = 1
             
             evals,*resto = self.__evaluate(position)
-            player = Player([pp.copy() for pp in position], [pp.copy() for pp in position], evals.copy(), self.numberOfRrh, self.numberOfVariables)
+            
+            player = Player([[p.copy() for p in pp] for pp in position], [[p.copy() for p in pp] for pp in position], [e.copy() for e in evals], self.numberOfRrh, self.numberOfVariables)
             players.append(player)
             
             if player.getBestEval() < self.globalBestEval:
                 self.globalBestEval = player.getBestEval()
-                self.globalBestEvals = player.bestEvals.copy()
-                self.globalBestPosition = [pp.copy() for pp in player.position]
+                self.globalBestEvals = [e.copy() for e in player.bestEvals]
+                self.globalBestPosition = [[p.copy() for p in pp] for pp in position]
             
         return players
             
@@ -165,7 +170,7 @@ class SGO:
         playersSorted.sort(key=lambda x: x.getBestEval())
         
         for player in playersSorted[:self.substituteNumber]:
-            substitutes.append(Player([pp.copy() for pp in player.bestPosition], [pp.copy() for pp in player.bestPosition], player.bestEvals.copy(), player.numberOfRrh, player.numberOfVariables))
+            substitutes.append(Player([[p.copy() for p in pp] for pp in player.bestPosition], [[p.copy() for p in pp] for pp in player.bestPosition], [e.copy() for e in player.bestEvals], player.numberOfRrh, player.numberOfVariables))
         
         return substitutes
     
@@ -188,53 +193,55 @@ class SGO:
         #player.position = list(np.random.choice([0,1], self.numberOfVariables))
         
         for x in range(self.numberOfRrh):
-            for y in range(self.numberOfVariables):
-                if np.random.rand() < 0.5:
-                    if player.position[x][y] == 1:
-                        player.position[x][y] = 0
-                    else:
-                        player.position[x][y] = 1
+            for y in range(len(self.numberOfVariables)):
+                for k in range(self.numberOfVariables[y]):
+                    if np.random.rand() < 0.5:
+                        if player.position[x][y][k] == 1:
+                            player.position[x][y][k] = 0
+                        else:
+                            player.position[x][y][k] = 1
         
         for x in range(self.numberOfRrh):
-            if player.position[x][11:15].count(1) == 0 or player.position[x][0:3].count(1) == 0:
-                player.position[x][11] = 1
-                player.position[x][0] = 1
+            if player.position[x][0].count(1) == 0 or player.position[x][2].count(1) == 0:
+                player.position[x][0][0] = 1
+                player.position[x][2][0] = 1
                 
     
     def __move_forward(self, player):
         bestPosition = player.bestPosition.copy()
         
         for i in range(self.numberOfRrh):
-            for j in range(self.numberOfVariables):
-                if bestPosition[i][j] == 1:
-                    d11 = self.cognitiveWeight * np.random.rand()
-                    d01 = self.cognitiveWeight * np.random.rand() * -1
-                    d12 = self.socialWeight * np.random.rand()
-                    d02 = self.socialWeight * np.random.rand() * -1
-                else:
-                    d11 = self.cognitiveWeight * np.random.rand() * -1
-                    d01 = self.cognitiveWeight * np.random.rand()
-                    d12 = self.socialWeight * np.random.rand() * -1
-                    d02 = self.socialWeight * np.random.rand()
+            for j in range(len(self.numberOfVariables)):
+                for k in range(self.numberOfVariables[j]):
+                    if bestPosition[i][j][k] == 1:
+                        d11 = self.cognitiveWeight * np.random.rand()
+                        d01 = self.cognitiveWeight * np.random.rand() * -1
+                        d12 = self.socialWeight * np.random.rand()
+                        d02 = self.socialWeight * np.random.rand() * -1
+                    else:
+                        d11 = self.cognitiveWeight * np.random.rand() * -1
+                        d01 = self.cognitiveWeight * np.random.rand()
+                        d12 = self.socialWeight * np.random.rand() * -1
+                        d02 = self.socialWeight * np.random.rand()
 
-                player.v1[i][j] = (self.inertiaWeight * player.v1[i][j]) + d11 + d12
-                player.v0[i][j] = (self.inertiaWeight * player.v0[i][j]) + d01 + d02
-                
-                if player.position[i][j] == 0:
-                    if np.random.rand() < self.__sig(player.v1[i][j]):
-                        player.position[i][j] = 1
+                    player.v1[i][j][k] = (self.inertiaWeight * player.v1[i][j][k]) + d11 + d12
+                    player.v0[i][j][k] = (self.inertiaWeight * player.v0[i][j][k]) + d01 + d02
+                    
+                    if player.position[i][j][k] == 0:
+                        if np.random.rand() < self.__sig(player.v1[i][j][k]):
+                            player.position[i][j][k] = 1
+                        else:
+                            player.position[i][j][k] = 0
                     else:
-                        player.position[i][j] = 0
-                else:
-                    if np.random.rand() < self.__sig(player.v0[i][j]):
-                        player.position[i][j] = 0
-                    else:
-                        player.position[i][j] = 1
+                        if np.random.rand() < self.__sig(player.v0[i][j][k]):
+                            player.position[i][j][k] = 0
+                        else:
+                            player.position[i][j][k] = 1
             
             
-            if player.position[i][11:15].count(1) == 0 or player.position[i][0:3].count(1) == 0:
-                player.position[i][11] = 1
-                player.position[i][0] = 1
+            if player.position[i][0].count(1) == 0 or player.position[i][2].count(1) == 0:
+                player.position[i][0][0] = 1
+                player.position[i][2][0] = 1
     
     
     def __sig(self, v):

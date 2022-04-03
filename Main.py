@@ -1,12 +1,13 @@
 from SGO.SGO import SGO
 
-playerNumber = 100
-substituteNumber = 5
+playerNumber = 15
+substituteNumber = 2
 kicksLimit = 1000000
-functionEvaluationLimit = 1000000
-numberOfRrh = 25
-numberOfVariables = 15
+functionEvaluationLimit = 100000
+numberOfRrh = 40
 target = 0
+moveOffProbability = 0.3
 
-sgo = SGO(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh, numberOfVariables, target=target)
-sgo.run()
+sgo = SGO(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh, target=target, moveOffProbability=moveOffProbability)
+
+resultado = sgo.run()

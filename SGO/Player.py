@@ -11,9 +11,13 @@ class Player:
         self.bestEvals = bestEvals
         self.numberOfRrh = numberOfRrh
         self.numberOfVariables = numberOfVariables
-        self.v1 = [[0] * numberOfVariables for i in range(numberOfRrh)]
-        self.v0 = [[0] * numberOfVariables for i in range(numberOfRrh)]
+        self.v1 = [[[0] * numberOfVariables[j] for j in range(len(numberOfVariables))] for i in range(numberOfRrh)]
+        self.v0 = [[[0] * numberOfVariables[j] for j in range(len(numberOfVariables))] for i in range(numberOfRrh)]
     
     def getBestEval(self):
-        return sum(self.bestEvals)
+        total = 0
+        for i in range(len(self.bestEvals)):
+            total += sum (self.bestEvals[i])
+        
+        return total
         
