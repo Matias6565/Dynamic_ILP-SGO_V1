@@ -63,6 +63,7 @@ act_fog = []
 avg_act_cloud = []
 avg_act_fog = []
 
+#SGO Parameters
 playerNumber = 15
 substituteNumber = 2
 kicksLimit = 1000000
@@ -422,12 +423,15 @@ class Traffic_Generator(object):
 		else:
 			b_average_count_fog.append(0.0)
 		#calculates the average time spent for the solution on this hour
-		if time_b:
-			avg_time_b.append((numpy.mean(time_b)))
-			time_b = []
-		else:
-			avg_time_b.append(0.0)
+		#if time_b:
+			#mean = len(time_b)
+			#avg_time_b.append((numpy.mean(time_b)))
+			#avg_time_b.append(time_b/mean)
+			#time_b = []
+		#else:
+			#avg_time_b.append(0.0)
 		#calculates the averages of power consumption and active resources
+
 		#calculates the number of redirected RRHs
 		if b_redirected_rrhs:
 			b_average_redir_rrhs.append(numpy.mean(b_redirected_rrhs))
@@ -497,9 +501,9 @@ class Control_Plane(object):
 		self.action = self.env.process(self.run())
 		self.deallocation = self.env.process(self.depart_request())
 		self.type = type
-		self.ilp = None
+		self.sgo = None
 		self.util = util
-		self.ilpBatch = None
+		self.sgoBatch = None
 		self.check_load = simpy.Store(self.env)
 		self.check_cloud_load = simpy.Store(self.env)
 		if self.type == "load_inc_batch":
@@ -556,23 +560,23 @@ class Control_Plane(object):
 			batch_list = copy.copy(actives)
 			#batch_list.append(r)
 			#actives.append(r)
-			self.ilp = plp.ILP(actives, range(len(actives)), plp.nodes, plp.lambdas, plp.Split)
-			self.ilp.resetValues()
-			solution = self.ilp.run_relaxed()
-			#solution = self.ilp.run()
+			self.sgo = plp.ILP(actives, range(len(actives)), plp.nodes, plp.lambdas, plp.Split)
+			self.sgo.resetValues()
+			solution = self.sgo.run_relaxed()
+			#solution = self.sgo.run()
 			if solution == None:
 				#print("Batch Blocking")
 				#print("Cant Schedule {} RRHs".format(len(actives)))
 				batch_power_consumption.append(self.util.getPowerConsumption(plp))
 				batch_blocking.append(1)
 			else:
-				solution_values = self.ilp.return_solution_values_relaxed()
-				#solution_values = self.ilp.return_solution_values()
-				self.ilp.updateValues(solution_values)
-				self.ilp.update_splits(solution_values)
+				solution_values = self.sgo.return_solution_values_relaxed()
+				#solution_values = self.sgo.return_solution_values()
+				self.sgo.updateValues(solution_values)
+				self.sgo.update_splits(solution_values)
 				batch_time.append(solution.solve_details.time)
-				delay1 = self.ilp.Latencia(solution_values)
-				delay3 = self.ilp.Delay_total(solution_values)
+				delay1 = self.sgo.Latencia(solution_values)
+				delay3 = self.sgo.Delay_total(solution_values)
 				cpu.append(psutil.cpu_percent())
 				delay.extend(delay1)
 				delay2.extend(delay3)
@@ -615,23 +619,23 @@ class Control_Plane(object):
 			count_switches = 0
 			block = 0
 			batch_list = copy.copy(actives)
-			self.ilp = plp.ILP(actives, range(len(actives)), plp.nodes, plp.lambdas)
+			self.sgo = plp.ILP(actives, range(len(actives)), plp.nodes, plp.lambdas)
 			copy_state = copy.copy(plp.nodeState)
-			self.ilp.resetValues()
-			solution = self.ilp.run_relaxed()
-			#solution = self.ilp.run()
+			self.sgo.resetValues()
+			solution = self.sgo.run_relaxed()
+			#solution = self.sgo.run()
 			if solution == None:
 				print("Batch Blocking")
 				print("Cant Schedule {} RRHs".format(len(actives)))
 				batch_power_consumption.append(self.util.getPowerConsumption(plp))
 				inc_batch_blocking.append(1)
 			else:
-				solution_values = self.ilp.return_solution_values_relaxed()
-				#solution_values = self.ilp.return_solution_values()
-				self.ilp.updateValues(solution_values)
-				self.ilp.update_splits(solution_values)
-				delay1 = self.ilp.Latencia(solution_values)
-				delay3 = self.ilp.Delay_total(solution_values)
+				solution_values = self.sgo.return_solution_values_relaxed()
+				#solution_values = self.sgo.return_solution_values()
+				self.sgo.updateValues(solution_values)
+				self.sgo.update_splits(solution_values)
+				delay1 = self.sgo.Latencia(solution_values)
+				delay3 = self.sgo.Delay_total(solution_values)
 				delay.extend(delay1)
 				delay2.extend(delay3)
 				cpu.append(psutil.cpu_percent())
@@ -715,13 +719,13 @@ class Control_Plane(object):
 		batch_list.append(r)
 		actives.append(r)
 		print("Total de Antenas {}".format(len(batch_list)))
-		self.ilp = plp(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh = len(batch_list), target=target, moveOffProbability=moveOffProbability)
+		self.sgo = plp(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh = len(batch_list), target=target, moveOffProbability=moveOffProbability)
 		#take a snapshot of the node states to account the migrations
 		#copy_state = copy.copy(ilp_module.nodeState)
 		#take a snapshot of the network state
-		#self.ilp.resetValues()
-		solution = self.ilp.run()
-		#solution = self.ilp.run()
+		#self.sgo.resetValues()
+		solution = self.sgo.run()
+		#solution = self.sgo.run()
 		if solution == None:
 			rrhs.append(r)
 			actives.remove(r)
@@ -729,22 +733,27 @@ class Control_Plane(object):
 			print("Batch Blocking")
 			print("Cant Schedule {} RRHs".format(len(actives)))
 			#print("Nodes state {}".format(copy_state))
-			batch_power_consumption.append(self.util.getPowerConsumption(ilp_module))
+			print("Energia {}".format(self.plp.getPowerConsumption()))
+			#batch_power_consumption.append(self.gbo.getPowerConsumption())
 			batch_blocking.append(1)
 		else:
 			sucs_reqs += 1
 			#print(solution.solve_details.time)
-			#solution_values = self.ilp.return_solution_values()
+			#solution_values = self.sgo.return_solution_values()
 			#solution_values = solution
-			self.ilp.updateValues()
-			#self.ilp.update_splits(solution_values)
-			#delay1 = self.ilp.Latencia(solution_values)
-			#delay3 = self.ilp.Delay_total(solution_values)
+			solution = self.sgo.updateValues()
+			#print("Atualização {}".format(solution))
+			print("Energia {}".format(self.sgo.getPowerConsumption()))
+			#batch_power_consumption.append(self.util.getPowerConsumption(solution))
+			#self.sgo.update_splits(solution_values)
+			#delay1 = self.sgo.Latencia(solution_values)
+			#delay3 = self.sgo.Delay_total(solution_values)
 			#delay.append(delay1)
 			#delay2.append(delay3)
 			#batch_time.append(solution.solve_details.time)
 			cpu.append(psutil.cpu_percent())
-			#time_b.append(solution.solve_details.time)
+			#time_b.append(self.sgo.get_Tempo)
+			#print("Tempo retornado {}".format(self.sgo.get_Tempo()))
 			#r.updateWaitTime(self.env.now+solution.solve_details.time)
 			self.env.process(r.run())
 			#batch_power_consumption.append(self.util.getPowerConsumption(ilp_module))
@@ -874,8 +883,8 @@ class Control_Plane(object):
 			r = yield self.departs.get()
 			#print(r.var_x)
 			#print("Departing {}".format(r.id))
-			#self.ilp.deallocateRRH(r)
-			#self.ilp.resetValues()
+			#self.sgo.deallocateRRH(r)
+			#self.sgo.resetValues()
 			r.var_x = None
 			r.var_u = None
 			r.enabled = False
@@ -896,12 +905,12 @@ class Control_Plane(object):
 				batch_list = copy.copy(actives)
 				#batch_list.append(r)
 				#actives.append(r)
-				self.ilp = plp(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh = len(batch_list), target=target, moveOffProbability=moveOffProbability)
+				self.sgo = plp(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh = len(batch_list), target=target, moveOffProbability=moveOffProbability)
 				#copy the actual state of nodes to account the possible migrations
 				#copy_state = copy.copy(plp.nodeState)
-				#self.ilp.resetValues()
-				#solution = self.ilp.run()
-				solution = self.ilp.run()
+				#self.sgo.resetValues()
+				#solution = self.sgo.run()
+				solution = self.sgo.run()
 				if solution == None:
 					print("Batch Blocking")
 					print("Cant Schedule {} RRHs".format(len(actives)))
@@ -909,11 +918,11 @@ class Control_Plane(object):
 					batch_blocking.append(1)
 				else:
 					#print(solution.solve_details.time)
-					#solution_values = self.ilp.return_solution_values_relaxed()
-					#solution_values = self.ilp.return_solution_values()
-					#self.ilp.updateValues(solution_values)
-					#self.ilp.update_splits(solution_values)
-					#delay1 = self.ilp.Latencia(solution_values)
+					#solution_values = self.sgo.return_solution_values_relaxed()
+					#solution_values = self.sgo.return_solution_values()
+					#self.sgo.updateValues(solution_values)
+					#self.sgo.update_splits(solution_values)
+					#delay1 = self.sgo.Latencia(solution_values)
 					#print(delay1)
 					#delay.append(delay1)
 					#batch_time.append(solution.solve_details.time)
@@ -1281,7 +1290,7 @@ util = Util()
 
 env = simpy.Environment()
 cp = Control_Plane(env, util, "batch")
-rrhs = util.createRRHs(10, env, service_time, cp)
+rrhs = util.createRRHs(5, env, service_time, cp)
 np.shuffle(rrhs)
 t = Traffic_Generator(env, distribution, service_time, cp)
 print("\Begin at "+str(env.now))

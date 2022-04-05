@@ -14,6 +14,9 @@ from RestrictionAll import Restricao
 nodeState = [0,0,0,0,0,0,0]
 split_state = [0,0,0,0,0,0,0,0]
 rrhs_on_nodes = [0,0,0,0,0,0,0]
+lambda_state = [0,0,0,0,0,0,0,0]
+
+global tempo
 
 class SGO:
     def __init__(self, playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh, numberOfVariables=[3,8,4],
@@ -36,6 +39,7 @@ class SGO:
         self.globalBestPosition = []
         self.globalBestEval = 10e1000000000000000
         self.globalBestEvals = []
+        #self.tempo = 0
     
     def run(self):
         players = []
@@ -133,8 +137,10 @@ class SGO:
 
 
         endTime = time.time()
+        tempo = float(endTime-startTime)
         print("")
         print("Execution Time: %fs" %(endTime-startTime))
+        #print("Execution Time2: {}" .format(self.tempo))
         print("Function Evaluations:",functionEval)
         print("------------------------------END------------------------------")
         return self.globalBestPosition
@@ -259,13 +265,18 @@ class SGO:
             split_id = total[t][2]
             for i in range(len(node_id)):
                 if node_id[i] ==1:
+                    #print("node state de {} é {}".format(i,node_id[i]))
                     if nodeState[i] == 0:
                         nodeState[i] = 1
+                        #print("node state de {} é {}".format(i,node_id[i]))
             for j in range(len(lambda_id)):
                 if lambda_id[j] ==1:
-                    if lambda_id[j] == 0:
-                        lambda_id[i] = 1
+                    if lambda_state[j] == 0:
+                        lambda_state[i] = 1
 
+    #def get_Tempo(self):
+        #print("Tempo {}".format(tempo))
+        #return float(endTime-startTime)
 
 	#compute the power consumption at the moment
     def getPowerConsumption(self):
@@ -279,7 +290,27 @@ class SGO:
         for w in lambda_state:
             if w == 1:
                 netCost += 20.0
-        for s in switch_state:
-            if s == 1:
-                netCost += 15.0
+        #for s in switch_state:
+        #    if s == 1:
+        #        netCost += 15.0
         return netCost
+
+    def countNodes(self):
+        global act_cloud, act_fog
+        for i in range(len(nodeState)):
+            if nodeState[i] == 1:
+                if i == 0:
+                    act_cloud += 1
+                else:
+                    act_fog += 1
+        return act_fog
+
+    def countlambdas(self):
+        global act_lambda
+        for i in range(len(lambda_state)):
+            if lambda_state[i] == 1:
+                if i == 0:
+                    act_lambda += 1
+                else:
+                    act_lambda += 1
+        return act_lambda
