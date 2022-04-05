@@ -11,6 +11,10 @@ import numpy as np
 from math import e
 from RestrictionAll import Restricao
 
+nodeState = [0,0,0,0,0,0,0]
+split_state = [0,0,0,0,0,0,0,0]
+rrhs_on_nodes = [0,0,0,0,0,0,0]
+
 class SGO:
     def __init__(self, playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh, numberOfVariables=[3,8,4],
                  target=None, moveOffProbability=0.1, moveForwardAfterMoveOffProbability=0.05, 
@@ -46,10 +50,10 @@ class SGO:
         functionEval += self.playerNumber
         
         for kick in range(self.kicksLimit):
-            print("Iteration :",kick,"BestEval =",self.globalBestEval,"BestPositions =",self.globalBestPosition)
-            print("Evals:",self.globalBestEvals)
+            #print("Iteration :",kick,"BestEval =",self.globalBestEval,"BestPositions =",self.globalBestPosition)
+            #print("Evals:",self.globalBestEvals)
             eval,total_cloud,total_fog = self.__evaluate(self.globalBestPosition)
-            print("Cloud", total_cloud, "Fog", total_fog)
+            #print("Cloud", total_cloud, "Fog", total_fog)
             self.dataFit.append(self.globalBestEval)
             
             if(self.target != None and self.globalBestEval <= self.target):
@@ -246,3 +250,36 @@ class SGO:
     
     def __sig(self, v):
         return 1 / (1 + (e ** (-v)))
+
+    def updateValues(self):
+        total = self.globalBestPosition
+        for t in range(len(total)):
+            node_id = total[t][0]
+            lambda_id = total[t][1]
+            split_id = total[t][2]
+            for i in range(len(node_id)):
+                if node_id[i] ==1:
+                    if nodeState[i] == 0:
+                        nodeState[i] = 1
+            for j in range(len(lambda_id)):
+                if lambda_id[j] ==1:
+                    if lambda_id[j] == 0:
+                        lambda_id[i] = 1
+
+
+	#compute the power consumption at the moment
+    def getPowerConsumption(self):
+        netCost = 0.0
+        for i in range(len(nodeState)):
+            if nodeState[i] == 1:
+                if i == 0:
+                    netCost += 600.0
+                else:
+                    netCost += 300.0
+        for w in lambda_state:
+            if w == 1:
+                netCost += 20.0
+        for s in switch_state:
+            if s == 1:
+                netCost += 15.0
+        return netCost

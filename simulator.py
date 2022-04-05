@@ -9,7 +9,7 @@ import psutil
 from scipy.stats import norm
 #import matplotlib.pyplot as plt
 #import batch_teste as lp
-import Split_ILP as plp
+from SGO.SGO import SGO as plp
 import copy
 import sys
 #to count the availability of the service
@@ -62,6 +62,14 @@ act_cloud = []
 act_fog = []
 avg_act_cloud = []
 avg_act_fog = []
+
+playerNumber = 15
+substituteNumber = 2
+kicksLimit = 1000000
+functionEvaluationLimit = 100000
+#numberOfRrh = 40
+target = 0
+moveOffProbability = 0.3
 
 #timestamp to change the load
 change_time = 3600
@@ -325,299 +333,6 @@ class Traffic_Generator(object):
 	def countAverageResources(self):
 		pass
 
-
-	#count average consumptions and activeresources for incremental with batch case
-	def countIncBatchAverages(self):
-		global inc_batch_count_cloud
-		global inc_batch_max_count_cloud
-		global inc_batch_count_fog
-		global inc_batch_average_count_fog
-		global time_inc_batch
-		global avg_time_inc_batch
-		global inc_batch_redirected_rrhs
-		global inc_batch_average_redir_rrhs
-		global inc_batch_power_consumption
-		global inc_batch_average_consumption
-		global inc_batch_activated_nodes
-		global inc_batch_average_act_nodes
-		global inc_batch_activated_lambdas
-		global inc_batch_average_act_lambdas
-		global inc_batch_activated_dus
-		global inc_batch_average_act_dus
-		global inc_batch_activated_switchs
-		global inc_batch_average_act_switch
-		global inc_batch_blocking
-		global avg_external_migrations
-		global avg_internal_migrations
-		global external_migrations
-		global internal_migrations
-		global avg_lambda_usage, avg_proc_usage, lambda_usage, proc_usage
-		global act_cloud, act_fog, avg_act_fog, avg_act_cloud
-		global served_requests, avg_total_allocated
-
-
-		if external_migrations:
-			count_ext_migrations.append(external_migrations)
-			avg_external_migrations.append(external_migrations/served_requests)
-			external_migrations = 0
-		else:
-			count_ext_migrations.append(0)
-			avg_external_migrations.append(0)
-
-		if internal_migrations:
-			avg_internal_migrations.append(internal_migrations)
-			internal_migrations = 0
-		else:
-			avg_internal_migrations.append(0)
-
-		#count the averages (sometimes sums) of metrics
-		if act_cloud:
-			avg_act_cloud.append(sum(act_cloud)/served_requests)
-			act_cloud = []
-		else:
-			avg_act_cloud.append(0)
-
-		if act_fog:
-			avg_act_fog.append(sum(act_fog)/served_requests)
-			act_fog = []
-		else:
-			avg_act_fog.append(0)
-
-		if lambda_usage:
-			avg_lambda_usage.append(numpy.mean(lambda_usage))
-			lambda_usage = []
-		else:
-			avg_lambda_usage.append(0.0)
-
-		if proc_usage:
-			avg_proc_usage.append(numpy.mean(proc_usage))
-			proc_usage = []
-		else:
-			avg_proc_usage.append(0.0)
-		
-		if inc_batch_blocking:
-			total_inc_batch_blocking.append(sum((inc_batch_blocking)))
-			inc_batch_blocking = []
-		else:
-			total_inc_batch_blocking.append(0)
-		if inc_batch_count_cloud:
-			inc_batch_max_count_cloud.append(sum((inc_batch_count_cloud)))
-			inc_batch_count_cloud = []
-		else:
-			inc_batch_max_count_cloud.append(0.0)
-		#activation of fog nodes
-		if inc_batch_count_fog:
-			inc_batch_average_count_fog.append(sum((inc_batch_count_fog)))
-			inc_batch_count_fog = []
-		else:
-			inc_batch_average_count_fog.append(0.0)
-		#calculates the average time spent for the solution on this hour
-		if time_inc_batch:
-			avg_time_inc_batch.append((numpy.mean(time_inc_batch)))
-			time_inc_batch = []
-		else:
-			avg_time_inc_batch.append(0.0)
-		#calculates the averages of power consumption and active resources
-		#calculates the number of redirected RRHs
-		if inc_batch_redirected_rrhs:
-			inc_batch_average_redir_rrhs.append(numpy.mean(inc_batch_redirected_rrhs))
-			inc_batch_redirected_rrhs = []
-		else:
-			inc_batch_average_redir_rrhs.append(0)
-		#power consumption for the incremental case
-		if inc_batch_power_consumption:
-			inc_batch_average_consumption.append(round(numpy.mean(inc_batch_power_consumption),4))
-			inc_batch_power_consumption = []
-		else:
-			inc_batch_average_consumption.append(0.0)
-		#activated nodes for the incremental case
-		if inc_batch_activated_nodes:
-			inc_batch_average_act_nodes.append(numpy.mean(inc_batch_activated_nodes))
-			inc_batch_activated_nodes = []
-		else:
-			inc_batch_average_act_nodes.append(0)
-		#activated lambdas for the incremental case
-		if inc_batch_activated_lambdas:
-			inc_batch_average_act_lambdas.append(numpy.mean(inc_batch_activated_lambdas))
-			inc_batch_activated_lambdas = []
-		else:
-			inc_batch_average_act_lambdas.append(0)
-		#activated DUs for the incremental case
-		if inc_batch_activated_dus:
-			inc_batch_average_act_dus.append(numpy.mean(inc_batch_activated_dus))
-			inc_batch_activated_dus = []
-		else:
-			inc_batch_average_act_dus.append(0)
-		#activated switches for the incremental case
-		if inc_batch_activated_switchs:
-			inc_batch_average_act_switch.append(numpy.mean(inc_batch_activated_switchs))
-			inc_batch_activated_switchs = []
-		else:
-			inc_batch_average_act_switch.append(0)
-
-		#count the probability o availability of service
-		if served_requests > 0:
-			avg_service_availability.append(served_requests/total_period_requests)
-			avg_total_allocated.append(served_requests)
-			served_requests = 0
-		else:
-			avg_service_availability.append(0)
-			avg_total_allocated.append(0)
-		if delay > 0:
-			avg_delay.append(delay)
-		else:
-			avg_delay.append(0)
-		if delay2>0:
-			avg_delay2.append(numpy.mean(delay2))
-		else:
-			avg_delay2.append(0)
-
-		if cpu >0:
-			avg_cpu.append(cpu)
-		else:
-			avg_cpu.append(0)
-
-	#count average consumptions and activeresources for incremental with batch case
-	def countLoadIncBatchAverages(self):
-		pass
-
-
-	#count average consumptions and active resources for the incremental case
-	def countIncAverages(self):
-		global incremental_power_consumption
-		global activated_nodes
-		global activated_dus
-		global activated_lambdas
-		global activated_switchs
-		global redirected_rrhs
-		global time_inc
-		global count_cloud
-		global count_fog
-		global inc_blocking
-		global avg_external_migrations
-		global avg_internal_migrations
-		global external_migrations
-		global internal_migrations
-		global avg_lambda_usage, avg_proc_usage, lambda_usage, proc_usage
-		global act_cloud, act_fog, avg_act_fog, avg_act_cloud
-		global served_requests, avg_total_allocated
-
-		if external_migrations:
-			count_ext_migrations.append(external_migrations)
-			avg_external_migrations.append(external_migrations/served_requests)
-			external_migrations = 0
-		else:
-			count_ext_migrations.append(0)
-			avg_external_migrations.append(0)
-
-		if internal_migrations:
-			avg_internal_migrations.append(internal_migrations)
-			internal_migrations = 0
-		else:
-			avg_internal_migrations.append(0)
-
-		#count the averages (sometimes sums) of metrics
-		if act_cloud:
-			avg_act_cloud.append(sum(act_cloud)/served_requests)
-			act_cloud = []
-		else:
-			avg_act_cloud.append(0)
-
-		if act_fog:
-			avg_act_fog.append(sum(act_fog)/served_requests)
-			act_fog = []
-		else:
-			avg_act_fog.append(0)
-
-
-		if lambda_usage:
-			avg_lambda_usage.append(numpy.mean(lambda_usage))
-			lambda_usage = []
-		else:
-			avg_lambda_usage.append(0.0)
-
-		if proc_usage:
-			avg_proc_usage.append(numpy.mean(proc_usage))
-			proc_usage = []
-		else:
-			avg_proc_usage.append(0.0)
-		
-		if inc_blocking:
-			total_inc_blocking.append(sum((inc_blocking)))
-			inc_blocking = []
-		else:
-			total_inc_blocking.append(0)
-		if count_cloud:
-			max_count_cloud.append(sum((count_cloud)))
-			count_cloud = []
-		else:
-			max_count_cloud.append(0.0)
-		#activation of fog nodes
-		if count_fog:
-			average_count_fog.append(sum((count_fog)))
-			count_fog = []
-		else:
-			average_count_fog.append(0.0)
-		#calculates the average time spent for the solution on this hour
-		if time_inc:
-			avg_time_inc.append((numpy.mean(time_inc)))
-			time_inc = []
-		else:
-			avg_time_inc.append(0.0)
-		#calculates the averages of power consumption and active resources
-		#calculates the number of redirected RRHs
-		if redirected_rrhs:
-			average_redir_rrhs.append(numpy.mean(redirected_rrhs))
-			redirected_rrhs = []
-		else:
-			average_redir_rrhs.append(0)
-		#power consumption for the incremental case
-		if incremental_power_consumption:
-			average_power_consumption.append(round(numpy.mean(incremental_power_consumption),4))
-			incremental_power_consumption = []
-		else:
-			average_power_consumption.append(0.0)
-		#activated nodes for the incremental case
-		if activated_nodes:
-			average_act_nodes.append(numpy.mean(activated_nodes))
-			activated_nodes = []
-		else:
-			average_act_nodes.append(0)
-		#activated lambdas for the incremental case
-		if activated_lambdas:
-			average_act_lambdas.append(numpy.mean(activated_lambdas))
-			activated_lambdas = []
-		else:
-			average_act_lambdas.append(0)
-		#activated DUs for the incremental case
-		if activated_dus:
-			average_act_dus.append(numpy.mean(activated_dus))
-			activated_dus = []
-		else:
-			average_act_dus.append(0)
-		#activated switches for the incremental case
-		if activated_switchs:
-			average_act_switch.append(numpy.mean(activated_switchs))
-			activated_switchs = []
-		else:
-			average_act_switch.append(0)
-
-		#count the probability o availability of service
-		if served_requests > 0:
-			avg_service_availability.append(served_requests/total_period_requests)
-			avg_total_allocated.append(served_requests)
-			served_requests = 0
-		else:
-			avg_service_availability.append(0)
-			avg_total_allocated.append(0)
-		if delay > 0:
-			avg_delay.append(delay)
-		else:
-			avg_delay.append(0)
-		if delay2>0:
-			avg_delay2.append(numpy.mean(delay2))
-		else:
-			avg_delay2.append(0)
 
 	#count average consumptions and active resources for the incremental case
 	def countBatchAverages(self):
@@ -986,63 +701,6 @@ class Control_Plane(object):
 			elif self.type == "load_inc_batch":
 				self.loadIncBatchSched(r, antenas, plp)
 
-	#incremental scheduling
-	def incSched(self, r, antenas, ilp_module, incremental_power_consumption, redirected_rrhs, 
-		activated_nodes, activated_lambdas, activated_switchs, inc_blocking):
-		count_nodes = 0
-		count_lambdas = 0
-		count_dus = 0
-		count_switches = 0
-		#print("Calling Incremental")
-		block = 0
-		self.ilp = plp.ILP(antenas, range(len(antenas)), ilp_module.nodes, ilp_module.lambdas, ilp_module.Split)
-		solution = self.ilp.run_relaxed()
-		if solution == None:
-			print("Incremental Blocking")
-			if self.type == "load_inc_batch":
-				inc_blocking.append(1)
-			else:
-				rrhs.append(r)
-				np.shuffle(rrhs)
-				antenas = []
-				inc_blocking.append(1)
-				incremental_power_consumption.append(self.util.getPowerConsumption(ilp_module))
-				return solution
-		else:
-			solution_values = self.ilp.return_solution_values_relaxed()
-			self.ilp.updateValues(solution_values)
-			self.ilp.update_splits(solution_values)
-			delay.append(self.ilp.Latencia(solution_values))
-			delay2.append(self.ilp.Delay_total(solution_values))
-			time_inc.append(solution.solve_details.time)
-			r.updateWaitTime(self.env.now)
-			for i in antenas:
-				self.env.process(i.run())
-				actives.append(i)
-				antenas.remove(i)
-				incremental_power_consumption.append(self.util.getPowerConsumption(ilp_module))
-			#count the activeresources
-			self.countNodes(ilp_module)
-			if solution_values.var_k:
-				redirected_rrhs.append(len(solution_values.var_k))
-			else:
-				redirected_rrhs.append(0)
-			for i in ilp_module.nodeState:
-				if i == 1:
-					count_nodes += 1
-			activated_nodes.append(count_nodes)
-			for i in ilp_module.lambda_state:
-				if i == 1:
-					count_lambdas += 1
-			activated_lambdas.append(count_lambdas)
-			for i in ilp_module.switch_state:
-				if i == 1:
-					count_switches += 1
-			activated_switchs.append(count_switches)
-			#count DUs and lambdas usage
-			if count_lambdas > 0:
-				lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
-			return solution
 
 	#batch scheduling
 	def batchSched(self, r, ilp_module, batch_power_consumption,b_redirected_rrhs,
@@ -1056,12 +714,13 @@ class Control_Plane(object):
 		batch_list = copy.copy(actives)
 		batch_list.append(r)
 		actives.append(r)
-		self.ilp = plp.ILP(actives, range(len(actives)), ilp_module.nodes, ilp_module.lambdas, ilp_module.Split)
+		print("Total de Antenas {}".format(len(batch_list)))
+		self.ilp = plp(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh = len(batch_list), target=target, moveOffProbability=moveOffProbability)
 		#take a snapshot of the node states to account the migrations
-		copy_state = copy.copy(ilp_module.nodeState)
+		#copy_state = copy.copy(ilp_module.nodeState)
 		#take a snapshot of the network state
-		self.ilp.resetValues()
-		solution = self.ilp.run_relaxed()
+		#self.ilp.resetValues()
+		solution = self.ilp.run()
 		#solution = self.ilp.run()
 		if solution == None:
 			rrhs.append(r)
@@ -1069,49 +728,49 @@ class Control_Plane(object):
 			np.shuffle(rrhs)
 			print("Batch Blocking")
 			print("Cant Schedule {} RRHs".format(len(actives)))
-			print("Nodes state {}".format(copy_state))
+			#print("Nodes state {}".format(copy_state))
 			batch_power_consumption.append(self.util.getPowerConsumption(ilp_module))
 			batch_blocking.append(1)
 		else:
 			sucs_reqs += 1
 			#print(solution.solve_details.time)
 			#solution_values = self.ilp.return_solution_values()
-			solution_values = self.ilp.return_solution_values_relaxed()
-			self.ilp.updateValues(solution_values)
-			self.ilp.update_splits(solution_values)
-			delay1 = self.ilp.Latencia(solution_values)
-			delay3 = self.ilp.Delay_total(solution_values)
-			delay.append(delay1)
-			delay2.append(delay3)
-			batch_time.append(solution.solve_details.time)
+			#solution_values = solution
+			self.ilp.updateValues()
+			#self.ilp.update_splits(solution_values)
+			#delay1 = self.ilp.Latencia(solution_values)
+			#delay3 = self.ilp.Delay_total(solution_values)
+			#delay.append(delay1)
+			#delay2.append(delay3)
+			#batch_time.append(solution.solve_details.time)
 			cpu.append(psutil.cpu_percent())
-			time_b.append(solution.solve_details.time)
-			r.updateWaitTime(self.env.now+solution.solve_details.time)
+			#time_b.append(solution.solve_details.time)
+			#r.updateWaitTime(self.env.now+solution.solve_details.time)
 			self.env.process(r.run())
-			batch_power_consumption.append(self.util.getPowerConsumption(ilp_module))
+			#batch_power_consumption.append(self.util.getPowerConsumption(ilp_module))
 			batch_rrhs_wait_time.append(self.averageWaitingTime(actives))
-			if solution_values.var_k:
-				b_redirected_rrhs.append(len(solution_values.var_k))
-			else:
-				b_redirected_rrhs.append(0)
+			#if solution_values.var_k:
+			#	b_redirected_rrhs.append(len(solution_values.var_k))
+			#else:
+			#	b_redirected_rrhs.append(0)
 			#counts the current activated nodes, lambdas, DUs and switches
-			self.countNodes(ilp_module)
+			#self.countNodes(ilp_module)
 			#counting each single vBBU migration - new method - Updated 2/12/2018
-			for i in ilp_module.nodeState:
-				if i == 1:
-					count_nodes += 1
-			b_activated_nodes.append(count_nodes)
-			for i in ilp_module.lambda_state:
-				if i == 1:
-					count_lambdas += 1
-			b_activated_lambdas.append(count_lambdas)
-			for i in ilp_module.switch_state:
-				if i == 1:
-					count_switches += 1
-			b_activated_switchs.append(count_switches)
+			#for i in ilp_module.nodeState:
+			#	if i == 1:
+			#		count_nodes += 1
+			#b_activated_nodes.append(count_nodes)
+			#for i in ilp_module.lambda_state:
+			#	if i == 1:
+			#		count_lambdas += 1
+			#b_activated_lambdas.append(count_lambdas)
+			#for i in ilp_module.switch_state:
+			#	if i == 1:
+			#		count_switches += 1
+			#b_activated_switchs.append(count_switches)
 			#count DUs and lambdas usage
-			if count_lambdas > 0:
-				lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
+			#if count_lambdas > 0:
+			#	lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
 			return solution
 
 	#calculates the average waiting time of RRHs to be scheduled
@@ -1153,30 +812,6 @@ class Control_Plane(object):
 		s = self.incSched(r, antenas, ilp_module,inc_batch_power_consumption,inc_batch_redirected_rrhs,inc_batch_activated_nodes, 
 				inc_batch_activated_lambdas,inc_batch_activated_dus,inc_batch_activated_switchs, inc_batch_blocking)
 
-
-	#count resources during the execution
-	def count_inc_resources(self, ilp_module, incremental_power_consumption, activated_nodes, activated_lambdas, activated_dus, activated_switchs):
-		count_nodes = 0
-		count_lambdas = 0
-		count_dus = 0
-		count_switches = 0
-		incremental_power_consumption.append(self.util.getPowerConsumption(ilp_module))
-		self.countNodes(ilp_module)
-		for i in ilp_module.nodeState:
-			if i == 1:
-				count_nodes += 1
-		activated_nodes.append(count_nodes)
-		for i in ilp_module.lambda_state:
-			if i == 1:
-				count_lambdas += 1
-		activated_lambdas.append(count_lambdas)
-		for i in ilp_module.switch_state:
-			if i == 1:
-				count_switches += 1
-		activated_switchs.append(count_switches)
-		#count DUs and lambdas usage
-		if count_lambdas > 0:
-			lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
 
 	def count_batch_resources(self, ilp_module, batch_power_consumption, b_activated_nodes, b_activated_lambdas, b_activated_dus, b_activated_switchs):
 		count_nodes = 0
@@ -1261,53 +896,53 @@ class Control_Plane(object):
 				batch_list = copy.copy(actives)
 				#batch_list.append(r)
 				#actives.append(r)
-				self.ilp = plp.ILP(actives, range(len(actives)), plp.nodes, plp.lambdas, plp.Split)
+				self.ilp = plp(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh = len(batch_list), target=target, moveOffProbability=moveOffProbability)
 				#copy the actual state of nodes to account the possible migrations
-				copy_state = copy.copy(plp.nodeState)
-				self.ilp.resetValues()
+				#copy_state = copy.copy(plp.nodeState)
+				#self.ilp.resetValues()
 				#solution = self.ilp.run()
-				solution = self.ilp.run_relaxed()
+				solution = self.ilp.run()
 				if solution == None:
 					print("Batch Blocking")
 					print("Cant Schedule {} RRHs".format(len(actives)))
-					batch_power_consumption.append(self.util.getPowerConsumption(plp))
+					#batch_power_consumption.append(self.util.getPowerConsumption(plp))
 					batch_blocking.append(1)
 				else:
 					#print(solution.solve_details.time)
-					solution_values = self.ilp.return_solution_values_relaxed()
+					#solution_values = self.ilp.return_solution_values_relaxed()
 					#solution_values = self.ilp.return_solution_values()
-					self.ilp.updateValues(solution_values)
-					self.ilp.update_splits(solution_values)
-					delay1 = self.ilp.Latencia(solution_values)
+					#self.ilp.updateValues(solution_values)
+					#self.ilp.update_splits(solution_values)
+					#delay1 = self.ilp.Latencia(solution_values)
 					#print(delay1)
-					delay.append(delay1)
-					batch_time.append(solution.solve_details.time)
+					#delay.append(delay1)
+					#batch_time.append(solution.solve_details.time)
 					cpu.append(psutil.cpu_percent())
-					time_b.append(solution.solve_details.time)
-					self.extMigrations(plp, copy_state)
-					batch_power_consumption.append(self.util.getPowerConsumption(plp))
-					batch_rrhs_wait_time.append(self.averageWaitingTime(actives))
-					if solution_values.var_k:
-						b_redirected_rrhs.append(len(solution_values.var_k))
-					else:
-						b_redirected_rrhs.append(0)
+					#time_b.append(solution.solve_details.time)
+					#self.extMigrations(plp, copy_state)
+					#batch_power_consumption.append(self.util.getPowerConsumption(plp))
+					#batch_rrhs_wait_time.append(self.averageWaitingTime(actives))
+					#if solution_values.var_k:
+					#	b_redirected_rrhs.append(len(solution_values.var_k))
+					#else:
+					#	b_redirected_rrhs.append(0)
 					#counts the current activated nodes, lambdas, DUs and switches
-					for i in plp.nodeState:
-						if i == 1:
-							count_nodes += 1
-					b_activated_nodes.append(count_nodes)
-					for i in plp.lambda_state:
-						if i == 1:
-							count_lambdas += 1
-					b_activated_lambdas.append(count_lambdas)
-					for i in plp.switch_state:
-						if i == 1:
-							count_switches += 1
-					b_activated_switchs.append(count_switches)
+					#for i in plp.nodeState:
+					#	if i == 1:
+					#		count_nodes += 1
+					#b_activated_nodes.append(count_nodes)
+					#for i in plp.lambda_state:
+					#	if i == 1:
+					#		count_lambdas += 1
+					#b_activated_lambdas.append(count_lambdas)
+					#for i in plp.switch_state:
+					#	if i == 1:
+					#		count_switches += 1
+					#b_activated_switchs.append(count_switches)
 					#batch_done = True
 					#count DUs and lambdas usage
-					if count_lambdas > 0:
-						lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
+					#if count_lambdas > 0:
+					#	lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
 				#self.count_batch_resources(plp,batch_power_consumption, b_activated_nodes, b_activated_lambdas, b_activated_dus, b_activated_switchs)
 			elif self.type == "inc_batch":
 				self.count_inc_batch_resources(plp, inc_batch_power_consumption,inc_batch_activated_nodes, 
@@ -1640,3 +1275,16 @@ class Util(object):
 		]
 		#rrhs = util.createRRHs(100, env, cp, service_time)
 		batch_count = 0
+
+# @Test
+util = Util()
+
+env = simpy.Environment()
+cp = Control_Plane(env, util, "batch")
+rrhs = util.createRRHs(10, env, service_time, cp)
+np.shuffle(rrhs)
+t = Traffic_Generator(env, distribution, service_time, cp)
+print("\Begin at "+str(env.now))
+env.run(until = 86401)
+
+print("\End at "+str(env.now))
