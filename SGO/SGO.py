@@ -15,7 +15,7 @@ nodeState = [0,0,0,0,0,0,0]
 split_state = [0,0,0,0,0,0,0,0]
 rrhs_on_nodes = [0,0,0,0,0,0,0]
 lambda_state = [0,0,0,0,0,0,0,0]
-
+act_lambda = 0
 global tempo
 
 class SGO:
@@ -39,14 +39,14 @@ class SGO:
         self.globalBestPosition = []
         self.globalBestEval = 10e1000000000000000
         self.globalBestEvals = []
-        #self.tempo = 0
+        self.tempo = 0
     
     def run(self):
         players = []
         substitutePlayers = []
         functionEval = 0
         
-        print("---------------------------EXECUTING---------------------------")
+        #print("---------------------------EXECUTING---------------------------")
         startTime = time.time()
         
         players = self.__initPopulation()
@@ -129,20 +129,20 @@ class SGO:
 
         total = self.globalBestPosition
         #print(total)
-        for t in range(len(total)):
-            Node_id = total[t][0]
-            Lambda_id = total[t][1]
-            Split_id = total[t][2]
-            print("Node_ID {}; Lambda_ID {}; Split_ID {}; and Antenas {}".format(Node_id, Lambda_id, Split_id, t))
+        #for t in range(len(total)):
+            #Node_id = total[t][0]
+            #Lambda_id = total[t][1]
+            #Split_id = total[t][2]
+           # print("Node_ID {}; Lambda_ID {}; Split_ID {}; and Antenas {}".format(Node_id, Lambda_id, Split_id, t))
 
 
         endTime = time.time()
-        tempo = float(endTime-startTime)
-        print("")
-        print("Execution Time: %fs" %(endTime-startTime))
+        #self.tempo = float(endTime-startTime)
+        #print("")
+        #print("Execution Time: %fs" %(endTime-startTime))
         #print("Execution Time2: {}" .format(self.tempo))
-        print("Function Evaluations:",functionEval)
-        print("------------------------------END------------------------------")
+        #print("Function Evaluations:",functionEval)
+        #print("------------------------------END------------------------------")
         return self.globalBestPosition
                     
                     
@@ -296,21 +296,9 @@ class SGO:
         return netCost
 
     def countNodes(self):
-        global act_cloud, act_fog
-        for i in range(len(nodeState)):
-            if nodeState[i] == 1:
-                if i == 0:
-                    act_cloud += 1
-                else:
-                    act_fog += 1
-        return act_fog
+        return nodeState.count(1)
 
     def countlambdas(self):
-        global act_lambda
-        for i in range(len(lambda_state)):
-            if lambda_state[i] == 1:
-                if i == 0:
-                    act_lambda += 1
-                else:
-                    act_lambda += 1
-        return act_lambda
+        return lambda_state.count(1)
+
+    #def getLambdasActives(self):   

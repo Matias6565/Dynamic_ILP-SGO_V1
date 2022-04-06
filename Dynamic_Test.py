@@ -8,9 +8,7 @@ from scipy.stats import norm
 import scipy as sp
 import scipy.stats
 import matplotlib.pyplot as plt
-#import simu_teste as lp
-#import psutil
-import Split_ILP as plp
+from SGO.SGO import SGO as plp
 import copy
 #import dynamic_simulator as sim # Meu é esse
 import simulator as sim
@@ -63,10 +61,13 @@ avg_total_delay2 = []
 #general function to reload modules
 def reloadModule(aModule):
     importlib.reload(aModule)
-#lists
-exec_number = 30
+
 util = sim.Util()
-number_of_rrhs = 60
+
+#exec_number = 40 - Teoria do Limite C.
+exec_number = 2
+number_of_rrhs = 5
+#number_of_rrhs = 40 - Nosso cenário
 
 for i in range(exec_number):
 	b_mig = []
@@ -86,20 +87,11 @@ for i in range(exec_number):
 	total_simu_power.append(sim.batch_average_consumption)
 	total_simu_nodes.append(sim.b_average_act_nodes)
 	total_simu_lambdas.append(sim.b_average_act_lambdas)
-	total_simu_redir.append(sim.b_average_redir_rrhs)
-	total_simu_switches.append(sim.b_average_act_switch)
-	total_simu_blocked.append(sim.total_batch_blocking)
-	total_simu_time.append(sim.avg_time_b)
+	#total_simu_time.append(sim.avg_time_b)
 	total_simu_lambda_usage.append(sim.avg_lambda_usage)
-	total_simu_proc_usage.append(sim.avg_proc_usage)
-	total_simu_cloud.append(sim.avg_act_cloud)
-	total_simu_fog.append(sim.avg_act_fog)
 	avg_simu_availability.append(sim.avg_service_availability)
+	#print(avg_simu_availability)
 	simu_served.append(sim.avg_total_allocated)
-	simu_req.append(sim.total_requested)
-	total_delay.append(sim.avg_delay)
-	total_delay2.append(sim.avg_delay2)
-	#print(total_delay)
 	cpu.append(sim.avg_cpu)
 	#print(cpu)
 	util.resetParams()
@@ -135,27 +127,19 @@ avg_cpu = [float(sum(col))/len(col) for col in zip(*cpu)]
 #confidence intervals
 simu_power_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_power)]
 simu_lambda_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_lambda_usage)]
-simu_blocking_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_blocked)]
-simu_exec_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_time)]
+#simu_blocking_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_blocked)]
+#simu_exec_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_time)]
 simu_availability_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*avg_simu_availability)]
-simu_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_power)]
+#simu_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_power)]
 
 
 numpy.random.seed(1)
-dados = pd.DataFrame(data={"simu_lambda_ci": simu_lambda_ci, "simu_exec_ci" : simu_exec_ci, "total_average_simu_power" : total_average_simu_power, "avg_total_simu_lambda_usage" : avg_total_simu_lambda_usage,"simu_nodes_mean": simu_nodes_mean, "simu_lambdas_mean": simu_lambdas_mean, "simu_time_mean" : simu_time_mean, "avg_total_simu_cloud": avg_total_simu_cloud, "avg_total_simu_fog":avg_total_simu_fog, "total_simu_served":total_simu_served, "total_simu_reqs":total_simu_reqs,"total_simu_avai":total_simu_avai, "avg_total_delay": avg_total_delay, "DelayCulmulado" : avg_total_delay2})
-dados.to_csv("dinamic_Split.csv", sep=';',index=False)
+#dados = pd.DataFrame(data={"simu_lambda_ci": simu_lambda_ci, "simu_exec_ci" : simu_exec_ci, "total_average_simu_power" : total_average_simu_power, "avg_total_simu_lambda_usage" : avg_total_simu_lambda_usage,"simu_nodes_mean": simu_nodes_mean, "simu_lambdas_mean": simu_lambdas_mean, "simu_time_mean" : simu_time_mean, "avg_total_simu_cloud": avg_total_simu_cloud, "avg_total_simu_fog":avg_total_simu_fog, "total_simu_served":total_simu_served, "total_simu_reqs":total_simu_reqs,"total_simu_avai":total_simu_avai, "avg_total_delay": avg_total_delay, "DelayCulmulado" : avg_total_delay2})
 
-with open('avg_Split_delay.txt','w') as filehandle:  
-    filehandle.write("Batch\n\n")
-    filehandle.writelines("%s\n" % p for p in avg_total_delay)
-    filehandle.write("\n")
+dados = pd.DataFrame(data={"Energy_mean" : total_average_simu_power, "Energy_mean_ci":simu_power_ci, "cobertura": total_simu_avai,"Nodes_mean": simu_nodes_mean, "Lambdas_mean": simu_lambdas_mean, "Lambda_ci": simu_lambda_ci, "avg_lambda_usage" : avg_total_simu_lambda_usage})
+dados.to_csv("SGO_Results.csv", sep=';',index=False)
 
-with open('avg_Split_delay2.txt','w') as filehandle:  
-    filehandle.write("Batch\n\n")
-    filehandle.writelines("%s\n" % p for p in avg_total_delay2)
-    filehandle.write("\n")
-
-with open('CPU_Split.txt','w') as filehandle:  
+with open('CPU.txt','w') as filehandle:  
     filehandle.write("Batch\n\n")
     filehandle.writelines("%s\n" % p for p in avg_cpu)
     filehandle.write("\n")

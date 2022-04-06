@@ -187,18 +187,6 @@ inc_batch_count_fog = []
 inc_batch_average_count_fog = []
 time_inc_batch = []
 avg_time_inc_batch = []
-inc_batch_redirected_rrhs = []
-inc_batch_average_redir_rrhs = []
-inc_batch_power_consumption = []
-inc_batch_average_consumption = []
-inc_batch_activated_nodes = []
-inc_batch_average_act_nodes = []
-inc_batch_activated_lambdas = []
-inc_batch_average_act_lambdas = []
-inc_batch_activated_dus = []
-inc_batch_average_act_dus = []
-inc_batch_activated_switchs = []
-inc_batch_average_act_switch = []
 avg_cpu = []
 cpu = []
 #------------------------------
@@ -544,141 +532,6 @@ class Control_Plane(object):
 			external_migrations += 1
 			daily_migrations += 1
 
-	#monitors the network and triggers the load balancing
-	def cloudMonitor(self):
-		while True:
-			batch_done = False
-			#print("AQUIII")
-			yield self.check_cloud_load.get()
-			#Verify the cloud can handle the load on the DUs of the F-APs (fog nodes)
-			count_nodes = 0
-			count_lambdas = 0
-			count_dus = 0
-			count_switches = 0
-			block = 0
-			#print("Calling Batch")
-			batch_list = copy.copy(actives)
-			#batch_list.append(r)
-			#actives.append(r)
-			self.sgo = plp.ILP(actives, range(len(actives)), plp.nodes, plp.lambdas, plp.Split)
-			self.sgo.resetValues()
-			solution = self.sgo.run_relaxed()
-			#solution = self.sgo.run()
-			if solution == None:
-				#print("Batch Blocking")
-				#print("Cant Schedule {} RRHs".format(len(actives)))
-				batch_power_consumption.append(self.util.getPowerConsumption(plp))
-				batch_blocking.append(1)
-			else:
-				solution_values = self.sgo.return_solution_values_relaxed()
-				#solution_values = self.sgo.return_solution_values()
-				self.sgo.updateValues(solution_values)
-				self.sgo.update_splits(solution_values)
-				batch_time.append(solution.solve_details.time)
-				delay1 = self.sgo.Latencia(solution_values)
-				delay3 = self.sgo.Delay_total(solution_values)
-				cpu.append(psutil.cpu_percent())
-				delay.extend(delay1)
-				delay2.extend(delay3)
-				time_b.append(solution.solve_details.time)
-				batch_power_consumption.append(self.util.getPowerConsumption(plp))
-				batch_rrhs_wait_time.append(self.averageWaitingTime(actives))
-				if solution_values.var_k:
-					b_redirected_rrhs.append(len(solution_values.var_k))
-				else:
-					b_redirected_rrhs.append(0)
-				#counts the current activated nodes, lambdas, DUs and switches
-				for i in plp.nodeState:
-					if i == 1:
-						count_nodes += 1
-				b_activated_nodes.append(count_nodes)
-				for i in plp.lambda_state:
-					if i == 1:
-						count_lambdas += 1
-				b_activated_lambdas.append(count_lambdas)
-				for i in plp.switch_state:
-					if i == 1:
-						count_switches += 1
-				b_activated_switchs.append(count_switches)
-				batch_done = True
-				#count DUs and lambdas usage
-				if count_lambdas > 0:
-					lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
-
-
-	#monitors the network and triggers the load balancing
-	def monitorLoad(self):
-		proc_loads = [0,0,0]
-		while True:
-			batch_done = False
-			#print("AQUIII")
-			yield self.check_load.get()
-			count_nodes = 0
-			count_lambdas = 0
-			count_dus = 0
-			count_switches = 0
-			block = 0
-			batch_list = copy.copy(actives)
-			self.sgo = plp.ILP(actives, range(len(actives)), plp.nodes, plp.lambdas)
-			copy_state = copy.copy(plp.nodeState)
-			self.sgo.resetValues()
-			solution = self.sgo.run_relaxed()
-			#solution = self.sgo.run()
-			if solution == None:
-				print("Batch Blocking")
-				print("Cant Schedule {} RRHs".format(len(actives)))
-				batch_power_consumption.append(self.util.getPowerConsumption(plp))
-				inc_batch_blocking.append(1)
-			else:
-				solution_values = self.sgo.return_solution_values_relaxed()
-				#solution_values = self.sgo.return_solution_values()
-				self.sgo.updateValues(solution_values)
-				self.sgo.update_splits(solution_values)
-				delay1 = self.sgo.Latencia(solution_values)
-				delay3 = self.sgo.Delay_total(solution_values)
-				delay.extend(delay1)
-				delay2.extend(delay3)
-				cpu.append(psutil.cpu_percent())
-				batch_time.append(solution.solve_details.time)
-				time_b.append(solution.solve_details.time)
-				#counts the external migrations
-				self.extMigrations(plp, copy_state)
-				batch_power_consumption.append(self.util.getPowerConsumption(plp))
-				batch_rrhs_wait_time.append(self.averageWaitingTime(actives))
-				if solution_values.var_k:
-					b_redirected_rrhs.append(len(solution_values.var_k))
-				else:
-					b_redirected_rrhs.append(0)
-				#counts the current activated nodes, lambdas, DUs and switches
-				for i in plp.nodeState:
-					if i == 1:
-						count_nodes += 1
-				b_activated_nodes.append(count_nodes)
-				for i in plp.lambda_state:
-					if i == 1:
-						count_lambdas += 1
-				b_activated_lambdas.append(count_lambdas)
-				for i in plp.switch_state:
-					if i == 1:
-						count_switches += 1
-				b_activated_switchs.append(count_switches)
-				#batch_done = True
-				#count DUs and lambdas usage
-				if count_lambdas > 0:
-					lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
-				CPU = psutil.cpu_percent()
-				cpu.append(CPU)
-	'''
-	#calculate the usage of each processing node
-	def getProcUsage(self, plp):
-		du_usage = 0
-		#counts the active DUs
-		for i in range(len(plp.du_state)):
-			du_usage += sum(plp.du_state[i])*dus_capacity[i]
-		#print("Active DUs {}".format(plp.du_state))
-		#print("Processing Usage {}".format(du_usage))
-		return du_usage
-	'''	
 	#take requests and tries to allocate on a RRH
 	def run(self):
 		global total_aloc
@@ -718,7 +571,7 @@ class Control_Plane(object):
 		batch_list = copy.copy(actives)
 		batch_list.append(r)
 		actives.append(r)
-		print("Total de Antenas {}".format(len(batch_list)))
+		#print("Total de Antenas {}".format(len(batch_list)))
 		self.sgo = plp(playerNumber, substituteNumber, kicksLimit, functionEvaluationLimit, numberOfRrh = len(batch_list), target=target, moveOffProbability=moveOffProbability)
 		#take a snapshot of the node states to account the migrations
 		#copy_state = copy.copy(ilp_module.nodeState)
@@ -738,18 +591,15 @@ class Control_Plane(object):
 			batch_blocking.append(1)
 		else:
 			sucs_reqs += 1
-			#print(solution.solve_details.time)
-			#solution_values = self.sgo.return_solution_values()
-			#solution_values = solution
 			solution = self.sgo.updateValues()
-			#print("Atualização {}".format(solution))
-			print("Energia {}".format(self.sgo.getPowerConsumption()))
-			#batch_power_consumption.append(self.util.getPowerConsumption(solution))
+			batch_power_consumption.append(self.sgo.getPowerConsumption())
+			#count_lambdas = self.sgo.countlambdas()
+			b_activated_lambdas.append(self.sgo.countlambdas())
+			b_activated_nodes.append(self.sgo.countNodes())
+			lambda_usage.append((len(actives)*1000)/(self.sgo.countlambdas()*10000.0))
+			#print("Total de Lambdas {}".format(self.sgo.countlambdas()))
+			#count_lambdas.append(self.sgo.countlambdas())
 			#self.sgo.update_splits(solution_values)
-			#delay1 = self.sgo.Latencia(solution_values)
-			#delay3 = self.sgo.Delay_total(solution_values)
-			#delay.append(delay1)
-			#delay2.append(delay3)
 			#batch_time.append(solution.solve_details.time)
 			cpu.append(psutil.cpu_percent())
 			#time_b.append(self.sgo.get_Tempo)
@@ -758,7 +608,7 @@ class Control_Plane(object):
 			self.env.process(r.run())
 			#batch_power_consumption.append(self.util.getPowerConsumption(ilp_module))
 			batch_rrhs_wait_time.append(self.averageWaitingTime(actives))
-			#if solution_values.var_k:
+			#if solution.var_k:
 			#	b_redirected_rrhs.append(len(solution_values.var_k))
 			#else:
 			#	b_redirected_rrhs.append(0)
@@ -791,87 +641,6 @@ class Control_Plane(object):
 			return numpy.mean(avg)
 		else:
 			return 0
-
-
-	#jointly incremental and batch scheduling
-	#this method calls the batch scheduling every time that a certain amount of RRHs arrived on the network
-	#after the batch is called, this threshold of RRHs is set to zero, so the process begins and the batch is called
-	#every after "x" RRHs
-	def incrementalBatchSched(self, r, antenas, ilp_module):
-		global count_rrhs
-		#verifies if is it time to call the batch scheduling
-		if count_rrhs == load_threshold:
-			#print("Entering batch")
-			#calls the batch scheduling
-			s = self.batchSched(r, ilp_module,inc_batch_power_consumption,inc_batch_redirected_rrhs,inc_batch_activated_nodes, 
-				inc_batch_activated_lambdas,inc_batch_activated_dus,inc_batch_activated_switchs, inc_batch_blocking)
-			count_rrhs = 0
-		else:
-			#print("entrou inc")
-			#print(count_rrhs)
-			s = self.incSched(r, antenas, ilp_module,inc_batch_power_consumption,inc_batch_redirected_rrhs,inc_batch_activated_nodes, 
-				inc_batch_activated_lambdas,inc_batch_activated_dus,inc_batch_activated_switchs, inc_batch_blocking)
-			count_rrhs += 1
-
-	#this method performs the incremental scheduling until a certain load of RRHs is activated on the network
-	#and above that load, only the batch scheduling is performed
-	#the incremental scheduling is only performed again when the load is under certain threshold
-	def loadIncBatchSched(self, r, antenas, ilp_module):
-		#verifies if is it time to call the batch scheduling
-		s = self.incSched(r, antenas, ilp_module,inc_batch_power_consumption,inc_batch_redirected_rrhs,inc_batch_activated_nodes, 
-				inc_batch_activated_lambdas,inc_batch_activated_dus,inc_batch_activated_switchs, inc_batch_blocking)
-
-
-	def count_batch_resources(self, ilp_module, batch_power_consumption, b_activated_nodes, b_activated_lambdas, b_activated_dus, b_activated_switchs):
-		count_nodes = 0
-		count_lambdas = 0
-		count_dus = 0
-		count_switches = 0
-		batch_power_consumption.append(self.util.getPowerConsumption(ilp_module))
-		#counts the current activated nodes, lambdas, DUs and switches
-		self.countNodes(ilp_module)
-		for i in ilp_module.nodeState:
-			if i == 1:
-				count_nodes += 1
-		b_activated_nodes.append(count_nodes)
-		for i in ilp_module.lambda_state:
-			if i == 1:
-				count_lambdas += 1
-		b_activated_lambdas.append(count_lambdas)
-		for i in ilp_module.switch_state:
-			if i == 1:
-				count_switches += 1
-		b_activated_switchs.append(count_switches)
-		#count DUs and lambdas usage
-		if count_lambdas > 0:
-			lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
-
-	def count_inc_batch_resources(self, ilp_module, inc_batch_power_consumption,inc_batch_activated_nodes, 
-		inc_batch_activated_lambdas,inc_batch_activated_dus,inc_batch_activated_switchs):
-		count_nodes = 0
-		count_lambdas = 0
-		count_dus = 0
-		count_switches = 0
-		#print("Calling Incremental")
-		inc_batch_power_consumption.append(self.util.getPowerConsumption(ilp_module))
-		#count the activeresources
-		self.countNodes(ilp_module)
-		for i in ilp_module.nodeState:
-			if i == 1:
-				count_nodes += 1
-		inc_batch_activated_nodes.append(count_nodes)
-		for i in ilp_module.lambda_state:
-			if i == 1:
-				count_lambdas += 1
-		inc_batch_activated_lambdas.append(count_lambdas)
-		for i in ilp_module.switch_state:
-			if i == 1:
-				count_switches += 1
-		inc_batch_activated_switchs.append(count_switches)
-		#count DUs and lambdas usage
-		if count_lambdas > 0:
-			lambda_usage.append((len(actives)*1000)/(count_lambdas*10000.0))
-
 	#starts the deallocation of a request
 	def depart_request(self):
 		global rrhs
@@ -917,9 +686,6 @@ class Control_Plane(object):
 					#batch_power_consumption.append(self.util.getPowerConsumption(plp))
 					batch_blocking.append(1)
 				else:
-					#print(solution.solve_details.time)
-					#solution_values = self.sgo.return_solution_values_relaxed()
-					#solution_values = self.sgo.return_solution_values()
 					#self.sgo.updateValues(solution_values)
 					#self.sgo.update_splits(solution_values)
 					#delay1 = self.sgo.Latencia(solution_values)
@@ -1284,7 +1050,7 @@ class Util(object):
 		]
 		#rrhs = util.createRRHs(100, env, cp, service_time)
 		batch_count = 0
-
+'''
 # @Test
 util = Util()
 
@@ -1297,3 +1063,4 @@ print("\Begin at "+str(env.now))
 env.run(until = 86401)
 
 print("\End at "+str(env.now))
+'''
