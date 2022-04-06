@@ -90,6 +90,10 @@ for i in range(exec_number):
 	#total_simu_time.append(sim.avg_time_b)
 	total_simu_lambda_usage.append(sim.avg_lambda_usage)
 	avg_simu_availability.append(sim.avg_service_availability)
+	#total_simu_blocked.append(sim.batch_blocking)
+	total_simu_blocked.append(sim.total_batch_blocking)
+	print(sim.total_batch_blocking)
+	#total_batch_blocked.append(sim.total_batch_blocking)
 	#print(avg_simu_availability)
 	simu_served.append(sim.avg_total_allocated)
 	cpu.append(sim.avg_cpu)
@@ -127,7 +131,7 @@ avg_cpu = [float(sum(col))/len(col) for col in zip(*cpu)]
 #confidence intervals
 simu_power_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_power)]
 simu_lambda_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_lambda_usage)]
-#simu_blocking_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_blocked)]
+simu_blocking_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_blocked)]
 #simu_exec_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_time)]
 simu_availability_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*avg_simu_availability)]
 #simu_ci = [Confidence_interval(col, confidence = 0.95) for col in zip(*total_simu_power)]
@@ -136,7 +140,7 @@ simu_availability_ci = [Confidence_interval(col, confidence = 0.95) for col in z
 numpy.random.seed(1)
 #dados = pd.DataFrame(data={"simu_lambda_ci": simu_lambda_ci, "simu_exec_ci" : simu_exec_ci, "total_average_simu_power" : total_average_simu_power, "avg_total_simu_lambda_usage" : avg_total_simu_lambda_usage,"simu_nodes_mean": simu_nodes_mean, "simu_lambdas_mean": simu_lambdas_mean, "simu_time_mean" : simu_time_mean, "avg_total_simu_cloud": avg_total_simu_cloud, "avg_total_simu_fog":avg_total_simu_fog, "total_simu_served":total_simu_served, "total_simu_reqs":total_simu_reqs,"total_simu_avai":total_simu_avai, "avg_total_delay": avg_total_delay, "DelayCulmulado" : avg_total_delay2})
 
-dados = pd.DataFrame(data={"Energy_mean" : total_average_simu_power, "Energy_mean_ci":simu_power_ci, "cobertura": total_simu_avai,"Nodes_mean": simu_nodes_mean, "Lambdas_mean": simu_lambdas_mean, "Lambda_ci": simu_lambda_ci, "avg_lambda_usage" : avg_total_simu_lambda_usage})
+dados = pd.DataFrame(data={"Energy_mean" : total_average_simu_power, "Energy_mean_ci":simu_power_ci, "cobertura": total_simu_avai,"Nodes_mean": simu_nodes_mean, "Lambdas_mean": simu_lambdas_mean, "Lambda_ci": simu_lambda_ci, "avg_lambda_usage" : avg_total_simu_lambda_usage, "Bloqueio" : simu_blocked_mean})
 dados.to_csv("SGO_Results.csv", sep=';',index=False)
 
 with open('CPU.txt','w') as filehandle:  
