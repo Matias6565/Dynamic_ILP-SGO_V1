@@ -300,4 +300,53 @@ class SGO:
     def countlambdas(self):
         return lambda_state.count(1)
 
-    #def getLambdasActives(self):   
+    def Cloudprocessing(self):
+        cloud = 0
+        total = self.globalBestPosition
+        for t in range(len(total)):
+            split_id = total[t][2]
+            if split_id[0]==1:
+                cloud+=1966
+            if split_id[1]==1:
+                cloud+= 675
+            if split_id[2]==1:
+                cloud+= 119
+            if split_id[3]==1:
+                cloud+=74
+        return cloud
+
+    def Fogprocessing(self):
+        fog = 0
+        total = self.globalBestPosition
+        for t in range(len(total)):
+            split_id = total[t][2]
+            if split_id[0]==1:
+                fog+=0
+            if split_id[1]==1:
+                fog+= 1966 - 675
+            if split_id[2]==1:
+                fog+= 1966- 119
+            if split_id[3]==1:
+                fog+= 1966- 74
+        return fog
+
+    def Totalprocessing(self):
+        total = 0
+        tot = self.globalBestPosition
+        for t in range(len(tot)):
+            split_id = tot[t][2]
+            if split_id[0]==1:
+                total+=1966
+            if split_id[1]==1:
+                total+= 1966
+            if split_id[2]==1:
+                total+= 1966
+            if split_id[3]==1:
+                total+= 1966
+        return total
+
+
+
+
+
+

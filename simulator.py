@@ -34,6 +34,14 @@ avg_external_migrations = []
 avg_internal_migrations = []
 count_ext_migrations = []
 
+Cloud_proc = []
+Fog_proc = []
+Total_proc = []
+
+avg_Cloud_proc = []
+avg_Fog_proc = []
+avg_Total_proc = []
+
 lambda_usage = []
 avg_lambda_usage = []
 proc_usage = []
@@ -332,6 +340,7 @@ class Traffic_Generator(object):
 		global b_activated_switchs
 		global b_redirected_rrhs
 		global time_b
+		global Cloud_proc,Fog_proc,Total_proc
 		global b_count_cloud
 		global b_count_fog
 		global batch_rrhs_wait_time
@@ -479,6 +488,28 @@ class Traffic_Generator(object):
 			avg_cpu.append(numpy.mean(cpu))
 		else:
 			avg_cpu.append(0)
+		if Cloud_proc:
+			#mean = len(time_b)
+			avg_Cloud_proc.append((numpy.mean(Cloud_proc)))
+			#avg_time_b.append(time_b/mean)
+			Cloud_proc = []
+		else:
+			avg_Cloud_proc.append(0.0)
+		if Fog_proc:
+			#mean = len(time_b)
+			avg_Fog_proc.append((numpy.mean(Fog_proc)))
+			#avg_time_b.append(time_b/mean)
+			Fog_proc = []
+		else:
+			avg_Fog_proc.append(0.0)
+		if Total_proc:
+			#mean = len(time_b)
+			avg_Total_proc.append((numpy.mean(Total_proc)))
+			#avg_time_b.append(time_b/mean)
+			Total_proc = []
+		else:
+			avg_Total_proc.append(0.0)
+
 
 #control plane that controls the allocations and deallocations
 class Control_Plane(object):
@@ -552,7 +583,7 @@ class Control_Plane(object):
 			if self.type == "inc":
 				self.incSched(r, antenas, plp, incremental_power_consumption, redirected_rrhs, activated_nodes, activated_lambdas, activated_switchs, inc_blocking)
 			elif self.type == "batch":
-				self.batchSched(r, plp, batch_power_consumption,b_redirected_rrhs,b_activated_nodes, b_activated_lambdas, b_activated_switchs, batch_blocking, delay, cpu)
+				self.batchSched(r, plp, batch_power_consumption,b_redirected_rrhs,b_activated_nodes, b_activated_lambdas, b_activated_switchs, batch_blocking, delay, cpu)#, Cloud_proc, Fog_proc, Total_proc
 			elif self.type == "inc_batch":
 				self.incrementalBatchSched(r,antenas, plp)
 			elif self.type == "load_inc_batch":
@@ -603,7 +634,15 @@ class Control_Plane(object):
 			#batch_time.append(solution.solve_details.time)
 			cpu.append(psutil.cpu_percent())
 			time_b.append(self.sgo.get_Tempo())
-			#print("Solver time {}".format(self.sgo.get_Tempo()))
+			Cloud_proc.append(self.sgo.Cloudprocessing())
+			Fog_proc.append(self.sgo.Fogprocessing())
+			Total_proc.append(self.sgo.Totalprocessing())
+
+			#print("Total traffic {}".format(self.sgo.Totalprocessing()))
+			#print("Cloud traffic {}".format(self.sgo.Cloudprocessing()))
+			#print("Fog traffic {}".format(self.sgo.Fogprocessing()))
+			#print("\n")
+
 			#print("Tempo retornado {}".format(self.sgo.get_Tempo()))
 			#r.updateWaitTime(self.env.now+solution.solve_details.time)
 			self.env.process(r.run())
@@ -828,7 +867,7 @@ class Util(object):
 		global inc_batch_average_act_nodes, inc_batch_activated_lambdas, inc_batch_average_act_lambdas,	inc_batch_activated_dus, inc_batch_average_act_dus
 		global inc_batch_activated_switchs, inc_batch_average_act_switch
 		global inc_blocking, total_inc_blocking, batch_blocking, total_batch_blocking, inc_batch_blocking, total_inc_batch_blocking
-		global external_migrations, internal_migrations, avg_external_migrations, avg_internal_migrations, served_requests
+		global external_migrations, internal_migrations, avg_external_migrations, avg_internal_migrations, served_requests, Cloud_proc, Fog_proc, Total_proc
 		global lambda_usage, avg_lambda_usage,proc_usage, avg_proc_usage
 		global act_cloud, act_fog, avg_act_cloud, avg_act_fog, daily_migrations
 		global count_ext_migrations, total_service_availability, avg_service_availability, avg_total_allocated, total_requested, avg_delay, avg_delay2, delay, cpu
@@ -853,6 +892,14 @@ class Util(object):
 		served_requests = 0
 		
 		daily_migrations = 0
+
+		Cloud_proc= []
+		Fog_proc = []
+		Total_proc = []
+		avg_Cloud_proc= []
+		avg_Fog_proc = []
+		avg_Total_proc = []
+
 
 		act_cloud = []
 		act_fog = []
