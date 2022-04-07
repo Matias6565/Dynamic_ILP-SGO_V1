@@ -87,12 +87,13 @@ for i in range(exec_number):
 	total_simu_power.append(sim.batch_average_consumption)
 	total_simu_nodes.append(sim.b_average_act_nodes)
 	total_simu_lambdas.append(sim.b_average_act_lambdas)
-	#total_simu_time.append(sim.avg_time_b)
+	total_simu_time.append(sim.avg_time_b)
+	#print("Tempo salvo{}".format(sim.avg_time_b))
 	total_simu_lambda_usage.append(sim.avg_lambda_usage)
 	avg_simu_availability.append(sim.avg_service_availability)
 	#total_simu_blocked.append(sim.batch_blocking)
 	total_simu_blocked.append(sim.total_batch_blocking)
-	print(sim.total_batch_blocking)
+	#print(sim.total_batch_blocking)
 	#total_batch_blocked.append(sim.total_batch_blocking)
 	#print(avg_simu_availability)
 	simu_served.append(sim.avg_total_allocated)
@@ -140,7 +141,7 @@ simu_availability_ci = [Confidence_interval(col, confidence = 0.95) for col in z
 numpy.random.seed(1)
 #dados = pd.DataFrame(data={"simu_lambda_ci": simu_lambda_ci, "simu_exec_ci" : simu_exec_ci, "total_average_simu_power" : total_average_simu_power, "avg_total_simu_lambda_usage" : avg_total_simu_lambda_usage,"simu_nodes_mean": simu_nodes_mean, "simu_lambdas_mean": simu_lambdas_mean, "simu_time_mean" : simu_time_mean, "avg_total_simu_cloud": avg_total_simu_cloud, "avg_total_simu_fog":avg_total_simu_fog, "total_simu_served":total_simu_served, "total_simu_reqs":total_simu_reqs,"total_simu_avai":total_simu_avai, "avg_total_delay": avg_total_delay, "DelayCulmulado" : avg_total_delay2})
 
-dados = pd.DataFrame(data={"Energy_mean" : total_average_simu_power, "Energy_mean_ci":simu_power_ci, "cobertura": total_simu_avai,"Nodes_mean": simu_nodes_mean, "Lambdas_mean": simu_lambdas_mean, "Lambda_ci": simu_lambda_ci, "avg_lambda_usage" : avg_total_simu_lambda_usage, "Bloqueio" : simu_blocked_mean})
+dados = pd.DataFrame(data={"Energy_mean" : total_average_simu_power, "Energy_mean_ci":simu_power_ci, "cobertura": total_simu_avai,"Nodes_mean": simu_nodes_mean, "Lambdas_mean": simu_lambdas_mean, "Lambda_ci": simu_lambda_ci, "avg_lambda_usage" : avg_total_simu_lambda_usage, "Bloqueio" : simu_blocked_mean,"Solver": simu_time_mean})
 dados.to_csv("SGO_Results.csv", sep=';',index=False)
 
 with open('CPU.txt','w') as filehandle:  
@@ -148,3 +149,19 @@ with open('CPU.txt','w') as filehandle:
     filehandle.writelines("%s\n" % p for p in avg_cpu)
     filehandle.write("\n")
 
+#with open('Solver.txt','w') as filehandle:  
+#    filehandle.write("Batch\n\n")
+#    filehandle.writelines("%s\n" % p for p in simu_time_mean)
+#    filehandle.write("\n")
+
+'''
+plt.plot(avg_cpu,marker='o', label = "CPU SGO")
+#plt.plot(batch_redir_mean,marker='^', label = "PureBatch-nfvILP")
+#plt.xticks(numpy.arange(0, 24, 1))
+#plt.yticks(numpy.arange(0, 500,50))
+plt.ylabel('CPU Usage (%)')
+plt.xlabel("Time of the day")
+plt.legend(loc="upper left",prop={'size': 6})
+plt.savefig('cpu.jpeg', format='jpeg', dpi=800)
+plt.show()
+'''

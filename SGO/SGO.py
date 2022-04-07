@@ -137,7 +137,7 @@ class SGO:
 
 
         endTime = time.time()
-        #self.tempo = float(endTime-startTime)
+        self.tempo = float(endTime-startTime)
         #print("")
         #print("Execution Time: %fs" %(endTime-startTime))
         #print("Execution Time2: {}" .format(self.tempo))
@@ -274,9 +274,8 @@ class SGO:
                     if lambda_state[j] == 0:
                         lambda_state[i] = 1
 
-    #def get_Tempo(self):
-        #print("Tempo {}".format(tempo))
-        #return float(endTime-startTime)
+    def get_Tempo(self):
+        return self.tempo
 
 	#compute the power consumption at the moment
     def getPowerConsumption(self):

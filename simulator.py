@@ -411,13 +411,13 @@ class Traffic_Generator(object):
 		else:
 			b_average_count_fog.append(0.0)
 		#calculates the average time spent for the solution on this hour
-		#if time_b:
+		if time_b:
 			#mean = len(time_b)
-			#avg_time_b.append((numpy.mean(time_b)))
+			avg_time_b.append((numpy.mean(time_b)))
 			#avg_time_b.append(time_b/mean)
-			#time_b = []
-		#else:
-			#avg_time_b.append(0.0)
+			time_b = []
+		else:
+			avg_time_b.append(0.0)
 		#calculates the averages of power consumption and active resources
 
 		#calculates the number of redirected RRHs
@@ -602,7 +602,8 @@ class Control_Plane(object):
 			#self.sgo.update_splits(solution_values)
 			#batch_time.append(solution.solve_details.time)
 			cpu.append(psutil.cpu_percent())
-			#time_b.append(self.sgo.get_Tempo)
+			time_b.append(self.sgo.get_Tempo())
+			#print("Solver time {}".format(self.sgo.get_Tempo()))
 			#print("Tempo retornado {}".format(self.sgo.get_Tempo()))
 			#r.updateWaitTime(self.env.now+solution.solve_details.time)
 			self.env.process(r.run())
