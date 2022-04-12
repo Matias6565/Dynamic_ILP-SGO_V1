@@ -1,5 +1,5 @@
 # Dynamic_ILP
-Dynamic Flexible Functional Splitting 
+Dynamic Flexible Functional Splitting With SGO
 
 
 *@Matias #TODO*
