@@ -47,6 +47,9 @@ avg_lambda_usage = []
 proc_usage = []
 avg_proc_usage = []
 
+Band_Block = []
+avg_Band_Block = []
+
 dus_total_capacity = [
 		[5.0, 5.0, 5.0, 5.0, 5.0],
 		[1.0, 1.0, 1.0, 1.0, 1.0],
@@ -73,10 +76,12 @@ avg_act_fog = []
 
 #SGO Parameters
 playerNumber = 15
-substituteNumber = 2
+substituteNumber = 3
 kicksLimit = 1000000
+#kicksLimit = 100000
 functionEvaluationLimit = 100000
 #numberOfRrh = 40
+#target = 10000
 target = 0
 moveOffProbability = 0.3
 
@@ -348,7 +353,7 @@ class Traffic_Generator(object):
 		global avg_external_migrations
 		global avg_internal_migrations
 		global external_migrations
-		global internal_migrations
+		global internal_migrations, Band_Block, avg_Band_Block
 		global avg_lambda_usage, avg_proc_usage, lambda_usage, proc_usage
 		global act_cloud, act_fog, avg_act_fog, avg_act_cloud
 		global served_requests, avg_total_allocated
@@ -510,6 +515,14 @@ class Traffic_Generator(object):
 		else:
 			avg_Total_proc.append(0.0)
 
+		if Band_Block:
+			#mean = len(time_b)
+			avg_Band_Block.append((numpy.mean(Band_Block)))
+			#avg_time_b.append(time_b/mean)
+			Band_Block = []
+		else:
+			avg_Band_Block.append(0.0)
+
 
 #control plane that controls the allocations and deallocations
 class Control_Plane(object):
@@ -627,7 +640,13 @@ class Control_Plane(object):
 			#count_lambdas = self.sgo.countlambdas()
 			b_activated_lambdas.append(self.sgo.countlambdas())
 			b_activated_nodes.append(self.sgo.countNodes())
-			lambda_usage.append((len(actives)*1000)/(self.sgo.countlambdas()*10000.0))
+			lambda_usage.append((len(actives)*1966)/(self.sgo.countlambdas()*10000.0))
+			if (len(actives)*1966)/(self.sgo.countlambdas()*10000.0) >1:
+				Band_Block.append((len(actives)*1966)-(self.sgo.countlambdas()*10000.0))
+			elif(len(actives)*1966)/(self.sgo.countlambdas()*10000.0)<=1:
+				Band_Block.append(0.0)
+			else:
+				Band_Block.append(0.0)
 			#print("Total de Lambdas {}".format(self.sgo.countlambdas()))
 			#count_lambdas.append(self.sgo.countlambdas())
 			#self.sgo.update_splits(solution_values)
@@ -868,7 +887,7 @@ class Util(object):
 		global inc_batch_activated_switchs, inc_batch_average_act_switch
 		global inc_blocking, total_inc_blocking, batch_blocking, total_batch_blocking, inc_batch_blocking, total_inc_batch_blocking
 		global external_migrations, internal_migrations, avg_external_migrations, avg_internal_migrations, served_requests, Cloud_proc, Fog_proc, Total_proc
-		global lambda_usage, avg_lambda_usage,proc_usage, avg_proc_usage
+		global lambda_usage, avg_lambda_usage,proc_usage, avg_proc_usage, Band_Block, avg_Band_Block
 		global act_cloud, act_fog, avg_act_cloud, avg_act_fog, daily_migrations
 		global count_ext_migrations, total_service_availability, avg_service_availability, avg_total_allocated, total_requested, avg_delay, avg_delay2, delay, cpu
 
@@ -943,8 +962,10 @@ class Util(object):
 		stamps = len(loads)
 		#record the requests arrived at each stamp
 		traffics = []
-				#amount of rrhs
+		#amount of rrhs
 		rrhs_amount = 100
+		avg_Band_Block = []
+
 		#list of rrhs of the network
 		rrhs = []
 		#amount of processing nodes
@@ -1013,6 +1034,7 @@ class Util(object):
 		#count the occurrences of cloud and fog nodes
 		count_cloud = []
 		count_fog = []
+		Band_Block = []
 		b_count_cloud = []
 		b_count_fog = []
 		max_count_cloud = []

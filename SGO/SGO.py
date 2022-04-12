@@ -129,11 +129,11 @@ class SGO:
 
         total = self.globalBestPosition
         #print(total)
-        #for t in range(len(total)):
-            #Node_id = total[t][0]
-            #Lambda_id = total[t][1]
-            #Split_id = total[t][2]
-           # print("Node_ID {}; Lambda_ID {}; Split_ID {}; and Antenas {}".format(Node_id, Lambda_id, Split_id, t))
+        for t in range(len(total)):
+            Node_id = total[t][0]
+            Lambda_id = total[t][1]
+            Split_id = total[t][2]
+            print("Node_ID {}; Lambda_ID {}; Split_ID {}; and Antenas {}".format(Node_id, Lambda_id, Split_id, t))
 
 
         endTime = time.time()

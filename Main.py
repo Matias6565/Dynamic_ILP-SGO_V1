@@ -4,7 +4,7 @@ playerNumber = 15
 substituteNumber = 2
 kicksLimit = 1000000
 functionEvaluationLimit = 100000
-numberOfRrh = 40
+numberOfRrh = 20
 target = 0
 moveOffProbability = 0.3
 
