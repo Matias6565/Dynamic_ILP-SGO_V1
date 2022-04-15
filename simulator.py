@@ -34,6 +34,17 @@ avg_external_migrations = []
 avg_internal_migrations = []
 count_ext_migrations = []
 
+SplitE_usage = []
+avg_SplitE_usage = []
+SplitI_usage = []
+avg_SplitI_usage = []
+SplitD_usage = []
+avg_SplitD_usage = []
+SplitB_usage = []
+avg_SplitB_usage = []
+
+
+
 Cloud_proc = []
 Fog_proc = []
 Total_proc = []
@@ -357,6 +368,7 @@ class Traffic_Generator(object):
 		global avg_lambda_usage, avg_proc_usage, lambda_usage, proc_usage
 		global act_cloud, act_fog, avg_act_fog, avg_act_cloud
 		global served_requests, avg_total_allocated
+		global SplitE_usage, avg_SplitE_usage, SplitI_usage, avg_SplitI_usage, SplitD_usage, avg_SplitD_usage, SplitB_usage, avg_SplitB_usage
 
 		#if external_migrations > 0:
 		#	avg_external_migrations.append(external_migrations)
@@ -396,13 +408,13 @@ class Traffic_Generator(object):
 			avg_lambda_usage.append(numpy.mean(lambda_usage))
 			lambda_usage = []
 		else:
-			avg_lambda_usage.append(0.0)
+			avg_lambda_usage.append(0)
 
 		if proc_usage:
 			avg_proc_usage.append(numpy.mean(proc_usage))
 			proc_usage = []
 		else:
-			avg_proc_usage.append(0.0)
+			avg_proc_usage.append(0)
 
 		if batch_blocking:
 			total_batch_blocking.append(sum((batch_blocking)))
@@ -413,17 +425,17 @@ class Traffic_Generator(object):
 			avg_batch_rrhs_wait_time.append(numpy.mean(batch_rrhs_wait_time))
 			batch_rrhs_wait_time = []
 		else:
-			avg_batch_rrhs_wait_time.append(0.0)
+			avg_batch_rrhs_wait_time.append(0)
 		if b_count_cloud:
 			b_max_count_cloud.append(sum((b_count_cloud)))
 			b_count_cloud = []
 		else:
-			b_max_count_cloud.append(0.0)
+			b_max_count_cloud.append(0)
 		if b_count_fog:
 			b_average_count_fog.append(sum((b_count_fog)))
 			b_count_fog = []
 		else:
-			b_average_count_fog.append(0.0)
+			b_average_count_fog.append(0)
 		#calculates the average time spent for the solution on this hour
 		if time_b:
 			#mean = len(time_b)
@@ -431,7 +443,7 @@ class Traffic_Generator(object):
 			#avg_time_b.append(time_b/mean)
 			time_b = []
 		else:
-			avg_time_b.append(0.0)
+			avg_time_b.append(0)
 		#calculates the averages of power consumption and active resources
 
 		#calculates the number of redirected RRHs
@@ -446,7 +458,7 @@ class Traffic_Generator(object):
 			batch_average_consumption.append(round(numpy.mean(batch_power_consumption), 4))
 			batch_power_consumption = []
 		else:
-			batch_average_consumption.append(0.0)
+			batch_average_consumption.append(0)
 		#activated nodes for the incremental case
 		if b_activated_nodes:
 			b_average_act_nodes.append(numpy.mean(b_activated_nodes))
@@ -499,21 +511,21 @@ class Traffic_Generator(object):
 			#avg_time_b.append(time_b/mean)
 			Cloud_proc = []
 		else:
-			avg_Cloud_proc.append(0.0)
+			avg_Cloud_proc.append(0)
 		if Fog_proc:
 			#mean = len(time_b)
 			avg_Fog_proc.append((numpy.mean(Fog_proc)))
 			#avg_time_b.append(time_b/mean)
 			Fog_proc = []
 		else:
-			avg_Fog_proc.append(0.0)
+			avg_Fog_proc.append(0)
 		if Total_proc:
 			#mean = len(time_b)
 			avg_Total_proc.append((numpy.mean(Total_proc)))
 			#avg_time_b.append(time_b/mean)
 			Total_proc = []
 		else:
-			avg_Total_proc.append(0.0)
+			avg_Total_proc.append(0)
 
 		if Band_Block:
 			#mean = len(time_b)
@@ -521,7 +533,41 @@ class Traffic_Generator(object):
 			#avg_time_b.append(time_b/mean)
 			Band_Block = []
 		else:
-			avg_Band_Block.append(0.0)
+			avg_Band_Block.append(0)
+
+
+		if SplitE_usage:
+			#mean = len(time_b)
+			avg_SplitE_usage.append((numpy.mean(SplitE_usage)))
+			#avg_time_b.append(time_b/mean)
+			SplitE_usage = []
+		else:
+			avg_SplitE_usage.append(0)
+
+		if SplitI_usage:
+			#mean = len(time_b)
+			avg_SplitI_usage.append((numpy.mean(SplitI_usage)))
+			#avg_time_b.append(time_b/mean)
+			SplitI_usage = []
+		else:
+			avg_SplitI_usage.append(0)
+
+		if SplitD_usage:
+			#mean = len(time_b)
+			avg_SplitD_usage.append((numpy.mean(SplitD_usage)))
+			#avg_time_b.append(time_b/mean)
+			SplitD_usage = []
+		else:
+			avg_SplitD_usage.append(0)
+
+		if SplitB_usage:
+			#mean = len(time_b)
+			avg_SplitB_usage.append((numpy.mean(SplitB_usage)))
+			#avg_time_b.append(time_b/mean)
+			SplitB_usage = []
+		else:
+			avg_SplitB_usage.append(0)
+
 
 
 #control plane that controls the allocations and deallocations
@@ -644,13 +690,13 @@ class Control_Plane(object):
 			if (len(actives)*1966)/(self.sgo.countlambdas()*10000.0) >1:
 				Band_Block.append((len(actives)*1966)-(self.sgo.countlambdas()*10000.0))
 			elif(len(actives)*1966)/(self.sgo.countlambdas()*10000.0)<=1:
-				Band_Block.append(0.0)
+				Band_Block.append(0)
 			else:
-				Band_Block.append(0.0)
-			#print("Total de Lambdas {}".format(self.sgo.countlambdas()))
-			#count_lambdas.append(self.sgo.countlambdas())
-			#self.sgo.update_splits(solution_values)
-			#batch_time.append(solution.solve_details.time)
+				Band_Block.append(0)
+			SplitE_usage.append(self.sgo.SplitE_Percent())
+			SplitI_usage.append(self.sgo.SplitI_Percent())
+			SplitD_usage.append(self.sgo.SplitD_Percent())
+			SplitB_usage.append(self.sgo.SplitB_Percent())
 			cpu.append(psutil.cpu_percent())
 			time_b.append(self.sgo.get_Tempo())
 			Cloud_proc.append(self.sgo.Cloudprocessing())
@@ -889,7 +935,8 @@ class Util(object):
 		global external_migrations, internal_migrations, avg_external_migrations, avg_internal_migrations, served_requests, Cloud_proc, Fog_proc, Total_proc
 		global lambda_usage, avg_lambda_usage,proc_usage, avg_proc_usage, Band_Block, avg_Band_Block
 		global act_cloud, act_fog, avg_act_cloud, avg_act_fog, daily_migrations
-		global count_ext_migrations, total_service_availability, avg_service_availability, avg_total_allocated, total_requested, avg_delay, avg_delay2, delay, cpu
+		global count_ext_migrations, total_service_availability, avg_service_availability, avg_total_allocated, total_requested, avg_delay, avg_delay2, delay, cpu, SplitE_usage, avg_SplitE_usage, SplitI_usage, avg_SplitI_usage, SplitD_usage, avg_SplitD_usage, SplitB_usage, avg_SplitB_usage
+
 
 		total_requested = []
 		avg_delay2 = []
@@ -903,6 +950,15 @@ class Util(object):
 		avg_lambda_usage = []
 		proc_usage = []
 		avg_proc_usage = []
+
+		SplitE_usage = []
+		avg_SplitE_usage = []
+		SplitI_usage = []
+		avg_SplitI_usage = []
+		SplitD_usage = []
+		avg_SplitD_usage = []
+		SplitB_usage = []
+		avg_SplitB_usage = []
 
 		external_migrations = 0
 		internal_migrations = 0

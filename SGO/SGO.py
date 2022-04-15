@@ -133,7 +133,7 @@ class SGO:
             Node_id = total[t][0]
             Lambda_id = total[t][1]
             Split_id = total[t][2]
-            print("Node_ID {}; Lambda_ID {}; Split_ID {}; and Antenas {}".format(Node_id, Lambda_id, Split_id, t))
+            #print("Node_ID {}; Lambda_ID {}; Split_ID {}; and Antenas {}".format(Node_id, Lambda_id, Split_id, t))
 
 
         endTime = time.time()
@@ -346,7 +346,39 @@ class SGO:
         return total
 
 
+    def SplitE_Percent(self):
+        total = 0
+        tot = self.globalBestPosition
+        for t in range(len(tot)):
+            split_id = tot[t][2]
+            if split_id[0]==1:
+              total+=1
+        return total
 
+    def SplitI_Percent(self):
+        total = 0
+        tot = self.globalBestPosition
+        for t in range(len(tot)):
+            split_id = tot[t][2]
+            if split_id[1]==1:
+              total+=1
+        return total
 
+    def SplitD_Percent(self):
+        total = 0
+        tot = self.globalBestPosition
+        for t in range(len(tot)):
+            split_id = tot[t][2]
+            if split_id[2]==1:
+              total+=1
+        return total
 
+    def SplitB_Percent(self):
+        total = 0
+        tot = self.globalBestPosition
+        for t in range(len(tot)):
+            split_id = tot[t][2]
+            if split_id[3]==1:
+              total+=1
+        return total
 
